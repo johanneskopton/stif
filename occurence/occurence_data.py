@@ -1,7 +1,26 @@
+import math
+
+import numba as nb
+import numpy as np
+import pandas as pd
+
+
+@nb.njit(fastmath=True)
+def frequency_transform(x, n_freqs=5):
+    x *= 2 * math.pi
+    res = np.empty((len(x), n_freqs), dtype=float)
+
+    for i in range(n_freqs):
+        res[:, i] = np.sin(x * 2**i)
+
+    res = (res+1) / 2
+    return res
+
+
 class OccurenceData:
     def __init__(
         self,
-        df,
+        df: pd.DataFrame,
         normalize=True,
         space_cols=["longitude", "latitude"],
         time_col="time",

@@ -1,6 +1,6 @@
 import numpy as np
 
-from .read_test_data import df
+from .read_pm10_test_data import df
 from occurence.occurence_data import OccurenceData
 
 

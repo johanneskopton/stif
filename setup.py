@@ -1,4 +1,5 @@
 import os
+
 from setuptools import setup
 
 
@@ -26,13 +27,14 @@ setup(
         "numpy",
         "matplotlib",
         "pandas",
-        "geopandas"
+        "geopandas",
     ],
     extras_require={
         "dev": [
             "pytest",
             "flake8",
-            "autopep8"
+            "autopep8",
+            "pre-commit",
         ],
     },
 )

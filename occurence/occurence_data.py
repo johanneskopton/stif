@@ -71,3 +71,16 @@ class OccurenceData:
     @property
     def presence(self):
         return self._df[self._presence_col].to_numpy()
+
+    def get_covariates(self, covariate_cols, covariate_transformations):
+        X = np.empty((len(self._df), 0), dtype=float)
+        for i, covariate_col in enumerate(covariate_cols):
+            if covariate_col in covariate_transformations.keys():
+                X = np.c_[
+                    X, covariate_transformations[covariate_col](
+                        self._df[covariate_col].to_numpy(),
+                    ),
+                ]
+            else:
+                X = np.c_[X, self._df[covariate_col]]
+        return X

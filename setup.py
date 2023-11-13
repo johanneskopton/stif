@@ -28,6 +28,8 @@ setup(
         "matplotlib",
         "pandas",
         "geopandas",
+        "scikit-learn",
+        "numba",
     ],
     extras_require={
         "dev": [

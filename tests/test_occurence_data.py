@@ -5,7 +5,7 @@ from occurence.occurence_data import OccurenceData
 
 
 def test_init_occurence_data():
-    occuence_data = OccurenceData(df, space_cols=["x", "y"])
+    occuence_data = OccurenceData(df, space_cols=["x", "y"], time_col="time")
     assert np.isclose(
         occuence_data.space_coords.mean(
             axis=0,

@@ -23,7 +23,7 @@ class OccurenceData:
         df: pd.DataFrame,
         normalize=True,
         space_cols=["longitude", "latitude"],
-        time_col="time",
+        time_col=None,
         presence_col="presence",
     ):
         """Prepare and provide the data.
@@ -51,12 +51,14 @@ class OccurenceData:
         if normalize:
             self._space_min = self._df[space_cols].min().to_numpy()
             self._space_max = self._df[space_cols].max().to_numpy()
-            self._time_min = self._df[time_col].min()
-            self._time_max = self._df[time_col].max()
             self._df[space_cols] = (self._df[space_cols] - self._space_min) / \
                 (self._space_max - self._space_min)
-            self._df[time_col] = (self._df[time_col] - self._time_min) / \
-                (self._time_max - self._time_min)
+
+            if time_col:
+                self._time_min = self._df[time_col].min()
+                self._time_max = self._df[time_col].max()
+                self._df[time_col] = (self._df[time_col] - self._time_min) / \
+                    (self._time_max - self._time_min)
 
     @property
     def space_coords(self):

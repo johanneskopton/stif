@@ -61,6 +61,16 @@ class OccurenceData:
                 self._df[time_col] = (self._df[time_col] - self._time_min) / \
                     (self._time_max - self._time_min)
 
+            for column in self._df.columns:
+                if column in [self._time_col, self._presence_col] + \
+                        self._space_cols:
+                    continue
+                if self._df[column].dtype.kind in 'iuf':
+                    col_min = self._df[column].min()
+                    col_max = self._df[column].max()
+                    self._df[column] = (self._df[column] - col_min) / \
+                        (col_max - col_min)
+
     @property
     def space_coords(self):
         return self._df[self._space_cols].to_numpy()

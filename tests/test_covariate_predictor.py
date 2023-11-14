@@ -5,8 +5,8 @@ from sklearn.neural_network import MLPClassifier
 
 from .read_pm10_test_data import df
 from occurence.covariate_predictor import CovariancePredictor
-from occurence.occurence_data import frequency_transform
 from occurence.occurence_data import OccurenceData
+from occurence.occurence_data import sinusodial_feature_transform
 
 
 def test_init_covariance_predictor():
@@ -36,9 +36,9 @@ def test_init_covariance_predictor_transformation():
         MLPClassifier,
         ["x", "y", "time"],
         covariate_transformations={
-            "x": frequency_transform,
-            "y": frequency_transform,
-            "time": lambda x: frequency_transform(x, 5),
+            "x": sinusodial_feature_transform,
+            "y": sinusodial_feature_transform,
+            "time": lambda x: sinusodial_feature_transform(x, 5),
         },
         model_params={
             "hidden_layer_sizes": [5],

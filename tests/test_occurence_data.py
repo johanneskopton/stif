@@ -1,7 +1,7 @@
 import numpy as np
 
 from .read_pm10_test_data import df
-from occurence.occurence_data import OccurenceData
+from occurence import OccurenceData
 
 
 def test_init_occurence_data():

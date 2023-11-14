@@ -4,9 +4,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
 
 from .read_pm10_test_data import df
-from occurence.covariate_predictor import CovariancePredictor
-from occurence.occurence_data import OccurenceData
-from occurence.occurence_data import sinusodial_feature_transform
+from occurence import CovariancePredictor
+from occurence import OccurenceData
+from occurence import sinusodial_feature_transform
 
 
 def test_init_covariance_predictor():

@@ -47,5 +47,4 @@ def test_init_covariance_predictor_transformation():
         },
     )
     predictor.fit()
-    predictor.plot_roc_curve()
     assert np.isclose(predictor.roc_auc_score, 0.75, rtol=0.1)

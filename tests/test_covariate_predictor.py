@@ -1,11 +1,12 @@
 import numpy as np
+import sklearn.metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
 
 from .read_pm10_test_data import df
-from occurence import CovariancePredictor
 from occurence import OccurenceData
+from occurence import Predictor
 from occurence import sinusodial_feature_transform
 
 
@@ -13,26 +14,32 @@ def test_init_covariance_predictor():
     data = OccurenceData(df, space_cols=["x", "y"], time_col="time")
 
     models = [LogisticRegression, RandomForestClassifier]
-    target_aucs = [0.60, 0.66]
+    target_aucs = [0.60, 0.64]
 
     for i, model in enumerate(models):
-        predictor = CovariancePredictor(
+        predictor = Predictor(
             data,
+        )
+        predictor.init_covariate_model(
             model,
             ["x", "y", "time"],
             model_params={
                 "random_state": 0,
             },
         )
-        predictor.fit()
-        assert np.isclose(predictor.roc_auc_score, target_aucs[i], rtol=0.1)
+        predictor.fit_covariate_model()
+        cv_aucs = predictor.get_cross_val_metric(sklearn.metrics.roc_auc_score)
+        assert np.isclose(cv_aucs[-1], target_aucs[i], rtol=0.1)
 
 
 def test_init_covariance_predictor_transformation():
     data = OccurenceData(df, space_cols=["x", "y"], time_col="time")
 
-    predictor = CovariancePredictor(
+    predictor = Predictor(
         data,
+        cv_splits=3,
+    )
+    predictor.init_covariate_model(
         MLPClassifier,
         ["x", "y", "time"],
         covariate_transformations={
@@ -46,5 +53,7 @@ def test_init_covariance_predictor_transformation():
             "max_iter": 500,
         },
     )
-    predictor.fit()
-    assert np.isclose(predictor.roc_auc_score, 0.75, rtol=0.1)
+    predictor.fit_covariate_model()
+    cv_aucs = predictor.get_cross_val_metric(sklearn.metrics.roc_auc_score)
+
+    assert np.isclose(cv_aucs, [0.7, 0.53, 0.7], rtol=0.1).all()

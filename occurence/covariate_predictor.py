@@ -97,7 +97,8 @@ class Predictor:
                 alpha=0.3,
                 lw=1,
                 ax=ax,
-                plot_chance_level=(fold == self._cv_splits - 1),
+                # compatibility with older sklearn and cuml
+                # plot_chance_level=(fold == self._cv_splits - 1),
             )
             interp_tpr = np.interp(mean_fpr, viz.fpr, viz.tpr)
             interp_tpr[0] = 0.0

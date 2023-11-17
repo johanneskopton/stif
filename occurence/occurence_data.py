@@ -7,6 +7,7 @@ import pandas as pd
 
 @nb.njit(fastmath=True)
 def sinusodial_feature_transform(x, n_freqs=6):
+    x = x.copy()
     x *= 2 * math.pi
     res = np.empty((len(x), n_freqs), dtype=float)
 

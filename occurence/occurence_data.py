@@ -13,9 +13,9 @@ def sinusodial_feature_transform(x, n_freqs=6):
 
     for i in range(n_freqs):
         if i % 2 == 0:
-            res[:, i] = np.sin(x * 2**int(i/2))
+            res[:, i] = np.sin(x * (1 + int(i/2)))
         else:
-            res[:, i] = np.cos(x * 2**int(i/2))
+            res[:, i] = np.cos(x * (1 + int(i/2)))
     return res
 
 

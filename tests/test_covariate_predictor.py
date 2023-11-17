@@ -17,15 +17,13 @@ def test_init_covariance_predictor():
     target_aucs = [0.60, 0.64]
 
     for i, model in enumerate(models):
+        classifier = model(random_state=0)
         predictor = Predictor(
             data,
         )
         predictor.init_covariate_model(
-            model,
+            classifier,
             ["x", "y", "time"],
-            model_params={
-                "random_state": 0,
-            },
         )
         predictor.fit_covariate_model()
         cv_aucs = predictor.get_cross_val_metric(sklearn.metrics.roc_auc_score)
@@ -39,18 +37,18 @@ def test_init_covariance_predictor_transformation():
         data,
         cv_splits=3,
     )
+    classifier = MLPClassifier(
+        hidden_layer_sizes=[5],
+        random_state=0,
+        max_iter=500,
+    )
     predictor.init_covariate_model(
-        MLPClassifier,
+        classifier,
         ["x", "y", "time"],
         covariate_transformations={
             "x": sinusodial_feature_transform,
             "y": sinusodial_feature_transform,
             "time": lambda x: sinusodial_feature_transform(x, 5),
-        },
-        model_params={
-            "hidden_layer_sizes": [5],
-            "random_state": 0,
-            "max_iter": 500,
         },
     )
     predictor.fit_covariate_model()

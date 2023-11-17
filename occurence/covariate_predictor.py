@@ -28,9 +28,8 @@ class Predictor:
         model: sklearn.base.ClassifierMixin,
         covariate_cols,
         covariate_transformations=dict(),
-        model_params=dict(),
     ):
-        self._cov_model = model(**model_params)
+        self._cov_model = model
         self._covariate_cols = covariate_cols
         self._covariate_transformations = covariate_transformations
         self._X = self._data.get_covariates(

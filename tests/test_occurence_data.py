@@ -9,13 +9,19 @@ def test_init_occurence_data():
     assert np.isclose(
         occuence_data.space_coords.mean(
             axis=0,
-        ), [0.48, 0.49], rtol=0.1,
+        ), [598158, 5685813], rtol=0.1,
     ).all()
-    assert np.isclose(occuence_data.time_coords.mean(), 0.49, rtol=0.1)
+    assert np.isclose(occuence_data.time_coords.mean(), 5294, rtol=0.1)
 
 
 def test_covariate_normalization():
     df["cov"] = np.random.randint(4, 17, len(df))
-    occuence_data = OccurenceData(df, space_cols=["x", "y"], time_col="time")
-    assert occuence_data._df["cov"].max() <= 1
-    assert occuence_data._df["cov"].min() >= 0
+    occuence_data = OccurenceData(
+        df,
+        space_cols=["x", "y"],
+        time_col="time",
+        covariate_cols=["cov"],
+    )
+    X = occuence_data.get_training_covariates()
+    assert (X.min(axis=0) >= 0).all()
+    assert (X.max(axis=0) <= 1).all()

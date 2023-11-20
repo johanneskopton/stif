@@ -1,4 +1,5 @@
 import math
+from functools import cached_property
 
 import numba as nb
 import numpy as np
@@ -23,10 +24,12 @@ class OccurenceData:
     def __init__(
         self,
         df: pd.DataFrame,
-        normalize=True,
         space_cols=["longitude", "latitude"],
         time_col=None,
         presence_col="presence",
+        covariate_cols=list(),
+        normalize=True,
+        covariate_transformations=dict(),
     ):
         """Prepare and provide the data.
 
@@ -34,8 +37,6 @@ class OccurenceData:
         ----------
         df : pandas.DataFrame
             The unstructured space-time data with one observation per row.
-        normalize : bool, optional
-            Provide normalized coordinates to the predictors, by default True
         space_cols : list(str), optional
             The names of the spatial coordinate columns,
             by default ["longitude", "latitude"]
@@ -44,55 +45,59 @@ class OccurenceData:
         presence_col : str, optional
             Name of the column, that contains the presence information
             with presence:=True and absence:=False, by default "presence"
+        covariate_cols : list(str), optional
+            The names of the covariate columns, by default empty list.
+        normalize : bool, optional
+            Provide normalized coordinates to the predictors, by default True
+        covariate_transformations : dict, optional
+            Functions for transforming the respective columns
         """
-        self._df = df
+        self._training_df = df
         self._space_cols = space_cols
         self._time_col = time_col
         self._presence_col = presence_col
+        self._covariate_cols = covariate_cols
+        self._normalize = normalize
+        self._covariate_transformations = covariate_transformations
 
-        if normalize:
-            self._space_min = self._df[space_cols].min().to_numpy()
-            self._space_max = self._df[space_cols].max().to_numpy()
-            self._df[space_cols] = (self._df[space_cols] - self._space_min) / \
-                (self._space_max - self._space_min)
+    @cached_property
+    def normalization_bounds(self):
+        normalization_bounds = dict()
+        for column in self._training_df.columns:
+            if self._training_df[column].dtype.kind in 'iuf':
+                col_min = self._training_df[column].min()
+                col_max = self._training_df[column].max()
+                normalization_bounds[column] = col_min, col_max
+        return normalization_bounds
 
-            if time_col:
-                self._time_min = self._df[time_col].min()
-                self._time_max = self._df[time_col].max()
-                self._df[time_col] = (self._df[time_col] - self._time_min) / \
-                    (self._time_max - self._time_min)
-
-            for column in self._df.columns:
-                if column in [self._time_col, self._presence_col] + \
-                        self._space_cols:
-                    continue
-                if self._df[column].dtype.kind in 'iuf':
-                    col_min = self._df[column].min()
-                    col_max = self._df[column].max()
-                    self._df[column] = (self._df[column] - col_min) / \
-                        (col_max - col_min)
+    def normalize(self, array, col_name):
+        norm_min, norm_max = self.normalization_bounds[col_name]
+        return (array - norm_min) / (norm_max - norm_min)
 
     @property
     def space_coords(self):
-        return self._df[self._space_cols].to_numpy()
+        return self._training_df[self._space_cols].to_numpy()
 
     @property
     def time_coords(self):
-        return self._df[self._time_col].to_numpy()
+        return self._training_df[self._time_col].to_numpy()
 
     @property
     def presence(self):
-        return self._df[self._presence_col].to_numpy()
+        return self._training_df[self._presence_col].to_numpy()
 
-    def get_covariates(self, covariate_cols, covariate_transformations):
-        X = np.empty((len(self._df), 0), dtype=float)
-        for i, covariate_col in enumerate(covariate_cols):
-            if covariate_col in covariate_transformations.keys():
-                X = np.c_[
-                    X, covariate_transformations[covariate_col](
-                        self._df[covariate_col].to_numpy(),
-                    ),
-                ]
-            else:
-                X = np.c_[X, self._df[covariate_col]]
+    def prepare_covariates(self, df):
+        X = np.empty((len(df), 0), dtype=float)
+        for i, covariate_col in enumerate(self._covariate_cols):
+            col_array = df[covariate_col].to_numpy(copy=True)
+            if self._normalize:
+                col_array = self.normalize(col_array, covariate_col)
+            if covariate_col in self._covariate_transformations.keys():
+                col_array = self._covariate_transformations[covariate_col](
+                    col_array,
+                )
+            X = np.c_[X, col_array]
         return X
+
+    def get_training_covariates(self):
+        return self.prepare_covariates(self._training_df)

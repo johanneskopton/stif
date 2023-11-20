@@ -11,31 +11,17 @@ class Predictor:
     def __init__(
         self,
         data: OccurenceData,
-        cv_splits=5,
+        covariate_model: sklearn.base.ClassifierMixin,
+        cv_splits: int = 5,
     ):
         self._data = data
         self._cv_splits = cv_splits
 
-        self._cov_model = None
-        self._covariate_cols = None
-        self._covariate_transformations = None
-        self._X = None
-        self._y = None
-        self._cross_val_res = None
-
-    def init_covariate_model(
-        self,
-        model: sklearn.base.ClassifierMixin,
-        covariate_cols,
-        covariate_transformations=dict(),
-    ):
-        self._cov_model = model
-        self._covariate_cols = covariate_cols
-        self._covariate_transformations = covariate_transformations
-        self._X = self._data.get_covariates(
-            self._covariate_cols, self._covariate_transformations,
-        )
+        self._cov_model = covariate_model
+        self._X = self._data.get_training_covariates()
         self._y = self._data.presence
+
+        self._cross_val_res = None
 
     def fit_covariate_model(self, train_idxs=None):
         if self._cov_model is None:

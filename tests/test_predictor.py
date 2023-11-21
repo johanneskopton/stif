@@ -24,7 +24,6 @@ def test_init_covariance_predictor():
     for i, model in enumerate(models):
         covariate_model = model(random_state=0)
         predictor = Predictor(data, covariate_model)
-        predictor.fit_covariate_model()
         cv_aucs = predictor.get_cross_val_metric(sklearn.metrics.roc_auc_score)
         assert np.isclose(cv_aucs[-1], target_aucs[i], rtol=0.1)
 
@@ -51,7 +50,6 @@ def test_init_covariance_predictor_transformation():
         cv_splits=3,
         covariate_model=covariate_model,
     )
-    predictor.fit_covariate_model()
     cv_aucs = predictor.get_cross_val_metric(sklearn.metrics.roc_auc_score)
 
     assert np.isclose(cv_aucs, [0.7, 0.53, 0.7], rtol=0.1).all()

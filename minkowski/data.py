@@ -20,13 +20,13 @@ def sinusodial_feature_transform(x, n_freqs=6):
     return res
 
 
-class OccurenceData:
+class Data:
     def __init__(
         self,
         df: pd.DataFrame,
         space_cols=["longitude", "latitude"],
         time_col=None,
-        presence_col="presence",
+        predictand_col="predictand",
         covariate_cols=list(),
         normalize=True,
         covariate_transformations=dict(),
@@ -42,9 +42,9 @@ class OccurenceData:
             by default ["longitude", "latitude"]
         time_col : str, optional
             The name of the temporal coordinate column, by default "time"
-        presence_col : str, optional
-            Name of the column, that contains the presence information
-            with presence:=True and absence:=False, by default "presence"
+        predictand_col : str, optional
+            Name of the column, that contains the predictand information,
+            by default "predictand"
         covariate_cols : list(str), optional
             The names of the covariate columns, by default empty list.
         normalize : bool, optional
@@ -55,7 +55,7 @@ class OccurenceData:
         self._training_df = df
         self._space_cols = space_cols
         self._time_col = time_col
-        self._presence_col = presence_col
+        self._predictand_col = predictand_col
         self._covariate_cols = covariate_cols
         self._normalize = normalize
         self._covariate_transformations = covariate_transformations
@@ -83,8 +83,8 @@ class OccurenceData:
         return self._training_df[self._time_col].to_numpy()
 
     @property
-    def presence(self):
-        return self._training_df[self._presence_col].to_numpy()
+    def predictand(self):
+        return self._training_df[self._predictand_col].to_numpy()
 
     def prepare_covariates(self, df):
         X = np.empty((len(df), 0), dtype=float)

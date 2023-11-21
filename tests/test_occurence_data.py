@@ -1,11 +1,12 @@
 import numpy as np
 
 from .read_pm10_test_data import df
-from occurence import OccurenceData
+from .read_pm10_test_data import df_binary
+from minkowski import Data
 
 
-def test_init_occurence_data():
-    occuence_data = OccurenceData(df, space_cols=["x", "y"], time_col="time")
+def test_init_data_binary():
+    occuence_data = Data(df_binary, space_cols=["x", "y"], time_col="time")
     assert np.isclose(
         occuence_data.space_coords.mean(
             axis=0,
@@ -16,10 +17,11 @@ def test_init_occurence_data():
 
 def test_covariate_normalization():
     df["cov"] = np.random.randint(4, 17, len(df))
-    occuence_data = OccurenceData(
+    occuence_data = Data(
         df,
         space_cols=["x", "y"],
         time_col="time",
+        predictand_col="PM10",
         covariate_cols=["cov"],
     )
     X = occuence_data.get_training_covariates()

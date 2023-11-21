@@ -1,6 +1,6 @@
-# Occurence
+# Minkowski
 
-Predicting the probability of species occurences based on presence/absence-data using space-time regression kriging using numpy and numba.
+Predicting spatio-temporally distributed variables using space-time regression kriging using numpy and numba.
 
 ## Installation
 

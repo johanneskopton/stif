@@ -4,15 +4,15 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
 
-from .read_pm10_test_data import df
-from occurence import OccurenceData
-from occurence import Predictor
-from occurence import sinusodial_feature_transform
+from .read_pm10_test_data import df_binary
+from minkowski import Data
+from minkowski import Predictor
+from minkowski import sinusodial_feature_transform
 
 
-def test_init_covariance_predictor():
-    data = OccurenceData(
-        df,
+def test_init_covariance_predictor_binary():
+    data = Data(
+        df_binary,
         space_cols=["x", "y"],
         time_col="time",
         covariate_cols=["x", "y", "time"],
@@ -28,9 +28,9 @@ def test_init_covariance_predictor():
         assert np.isclose(cv_aucs[-1], target_aucs[i], rtol=0.1)
 
 
-def test_init_covariance_predictor_transformation():
-    data = OccurenceData(
-        df,
+def test_init_covariance_predictor_transformation_binary():
+    data = Data(
+        df_binary,
         space_cols=["x", "y"],
         time_col="time",
         covariate_cols=["x", "y", "time"],
@@ -55,9 +55,9 @@ def test_init_covariance_predictor_transformation():
     assert np.isclose(cv_aucs, [0.7, 0.53, 0.7], rtol=0.1).all()
 
 
-def test_residuals():
-    data = OccurenceData(
-        df,
+def test_residuals_binary():
+    data = Data(
+        df_binary,
         space_cols=["x", "y"],
         time_col="time",
         covariate_cols=["x", "y", "time"],

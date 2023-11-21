@@ -8,14 +8,14 @@ def read(fname):
 
 
 setup(
-    name="occurence",
+    name="minkowski",
     version="0.0.1",
     author="Johannes Kopton",
     author_email="johannes@kopton.org",
-    description=("Predicting the probability of species occurences"),
+    description=("Predicting the probability of species minkowskis"),
     keywords="kriging species distribution spacetime spatio-temporal",
-    url="https://github.com/johanneskopton/occurence",
-    packages=["occurence"],
+    url="https://github.com/johanneskopton/minkowski",
+    packages=["minkowski"],
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
     classifiers=[

@@ -3,14 +3,14 @@ import numpy as np
 import sklearn.metrics
 import sklearn.model_selection
 
-from occurence.occurence_data import OccurenceData
+from minkowski import Data
 plt.style.use("ggplot")
 
 
 class Predictor:
     def __init__(
         self,
-        data: OccurenceData,
+        data: Data,
         covariate_model: sklearn.base.ClassifierMixin,
         cv_splits: int = 5,
     ):
@@ -19,7 +19,7 @@ class Predictor:
 
         self._cov_model = covariate_model
         self._X = self._data.get_training_covariates()
-        self._y = self._data.presence
+        self._y = self._data.predictand
 
         self._cross_val_res = None
 

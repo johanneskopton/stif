@@ -42,7 +42,7 @@ class Predictor:
     def get_residuals(self, idxs=slice(None)):
         return self.get_covariate_probability(idxs) - self._y[idxs]
 
-    def calc_cross_validation(self):  # , apply=None, apply_on_prob=True):
+    def calc_cross_validation(self):
         cv = sklearn.model_selection.TimeSeriesSplit(n_splits=self._cv_splits)
         ground_truth = []
         pred_probability = []

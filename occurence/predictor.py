@@ -29,28 +29,18 @@ class Predictor:
         else:
             self._cov_model.fit(self._X[train_idxs, :], self._y[train_idxs])
 
-    def _get_X(self, idxs):
-        if idxs is None:
-            X = self._X
-        else:
-            X = self._X[idxs, :]
-        return X
+    def get_covariate_prediction(self, idxs=slice(None)):
+        return self._cov_model.predict(self._X[idxs])
 
-    def get_covariate_prediction(self, idxs=None):
-        return self._cov_model.predict(self._get_X(idxs))
-
-    def get_covariate_probability(self, idxs=None):
-        return self._cov_model.predict_proba(self._get_X(idxs))[:, 1]
+    def get_covariate_probability(self, idxs=slice(None)):
+        return self._cov_model.predict_proba(self._X[idxs])[:, 1]
 
     def predict_covariate_probability(self, df):
         X = self._data.prepare_covariates(df)
         return self._cov_model.predict_proba(X)[:, 1]
 
-    def get_residuals(self, idxs=None):
-        if idxs is None:
-            return self.get_covariate_probability(idxs) - self._y[idxs]
-        else:
-            return self.get_covariate_probability() - self._y
+    def get_residuals(self, idxs=slice(None)):
+        return self.get_covariate_probability(idxs) - self._y[idxs]
 
     def calc_cross_validation(self):  # , apply=None, apply_on_prob=True):
         cv = sklearn.model_selection.TimeSeriesSplit(n_splits=self._cv_splits)

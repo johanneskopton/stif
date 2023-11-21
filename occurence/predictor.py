@@ -29,11 +29,18 @@ class Predictor:
         else:
             self._cov_model.fit(self._X[train_idxs, :], self._y[train_idxs])
 
-    def test_covariate_prediction(self, test_idxs):
-        return self._cov_model.predict(self._X[test_idxs, :])
+    def _get_X(self, idxs):
+        if idxs is None:
+            X = self._X
+        else:
+            X = self._X[idxs, :]
+        return X
 
-    def test_covariate_probability(self, test_idxs):
-        return self._cov_model.predict_proba(self._X[test_idxs, :])[:, 1]
+    def get_covariate_prediction(self, idxs=None):
+        return self._cov_model.predict(self._get_X(idxs))
+
+    def get_covariate_probability(self, idxs=None):
+        return self._cov_model.predict_proba(self._get_X(idxs))[:, 1]
 
     def predict_covariate_probability(self, df):
         X = self._data.prepare_covariates(df)
@@ -47,8 +54,8 @@ class Predictor:
         for fold, (train, test) in enumerate(cv.split(self._X, self._y)):
             self.fit_covariate_model(train)
             ground_truth.append(self._y[test])
-            pred_probability.append(self.test_covariate_probability(test))
-            pred.append(self.test_covariate_prediction(test))
+            pred_probability.append(self.get_covariate_probability(test))
+            pred.append(self.get_covariate_prediction(test))
 
         self._cross_val_res = ground_truth, pred_probability, pred
 

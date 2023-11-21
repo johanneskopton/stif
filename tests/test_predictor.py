@@ -55,3 +55,19 @@ def test_init_covariance_predictor_transformation():
     cv_aucs = predictor.get_cross_val_metric(sklearn.metrics.roc_auc_score)
 
     assert np.isclose(cv_aucs, [0.7, 0.53, 0.7], rtol=0.1).all()
+
+
+def test_residuals():
+    data = OccurenceData(
+        df,
+        space_cols=["x", "y"],
+        time_col="time",
+        covariate_cols=["x", "y", "time"],
+    )
+
+    covariate_model = LogisticRegression(random_state=0)
+    predictor = Predictor(data, covariate_model)
+    predictor.fit_covariate_model()
+    residuals = predictor.get_residuals()
+    assert np.isclose(residuals.mean(), 0, atol=1e-4)
+    assert np.isclose(residuals.std(), 0.46, rtol=0.1)

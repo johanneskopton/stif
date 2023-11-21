@@ -24,8 +24,6 @@ class Predictor:
         self._cross_val_res = None
 
     def fit_covariate_model(self, train_idxs=None):
-        if self._cov_model is None:
-            raise ValueError("Please run `init_covariate_model(...)` first.")
         if train_idxs is None:
             self._cov_model.fit(self._X, self._y)
         else:

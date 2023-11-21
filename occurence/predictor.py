@@ -37,6 +37,10 @@ class Predictor:
     def test_covariate_probability(self, test_idxs):
         return self._cov_model.predict_proba(self._X[test_idxs, :])[:, 1]
 
+    def predict_covariate_probability(self, df):
+        X = self._data.prepare_covariates(df)
+        return self._cov_model.predict_proba(X)[:, 1]
+
     def calc_cross_validation(self):  # , apply=None, apply_on_prob=True):
         cv = sklearn.model_selection.TimeSeriesSplit(n_splits=self._cv_splits)
         ground_truth = []

@@ -296,6 +296,26 @@ class Predictor:
     ):
         if self._variogram is None:
             raise ValueError("Calc variogram first.")
+
+        self._plot_variogram(
+            self._variogram,
+            fig=fig,
+            ax=ax,
+            vrange=vrange,
+            title=title,
+        )
+
+    def _plot_variogram(
+        self,
+        variogram,
+        fig=None,
+        ax=None,
+        vrange=(None, None),
+        title="",
+    ):
+        if self._variogram_bins_space is None:
+            raise ValueError("Calc variogram first or set bins manually.")
+
         X, Y = np.meshgrid(
             self._variogram_bins_space,
             self._variogram_bins_time,
@@ -308,7 +328,7 @@ class Predictor:
             standalone = False
         vmin, vmax = vrange
         plot = ax.plot_surface(
-            X, Y, self._variogram.T, vmin=vmin, vmax=vmax,
+            X, Y, variogram.T, vmin=vmin, vmax=vmax,
             cmap="plasma", edgecolor="black", linewidth=0.5,
         )
         ax.view_init(elev=35., azim=225)

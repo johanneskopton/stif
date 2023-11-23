@@ -1,9 +1,11 @@
 import numpy as np
 import sklearn.metrics
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
 
+from .read_pm10_test_data import df
 from .read_pm10_test_data import df_binary
 from minkowski import Data
 from minkowski import Predictor
@@ -69,3 +71,26 @@ def test_residuals_binary():
     residuals = predictor.get_residuals()
     assert np.isclose(residuals.mean(), 0, atol=1e-4)
     assert np.isclose(residuals.std(), 0.46, rtol=0.1)
+
+
+def test_empirical_variogram():
+    data = Data(
+        df,
+        space_cols=["x", "y"],
+        time_col="time",
+        predictand_col="PM10",
+        covariate_cols=["x", "y", "time"],
+    )
+
+    covariate_model = LinearRegression()
+    predictor = Predictor(data, covariate_model)
+    predictor.fit_covariate_model()
+
+    predictor.calc_empirical_variogram(
+        space_dist_max=6e5,
+        time_dist_max=10,
+        el_max=1e8,
+    )
+
+    assert np.isclose(predictor._variogram.min(), 27.8, rtol=0.1)
+    assert np.isclose(predictor._variogram.max(), 136.0, rtol=0.1)

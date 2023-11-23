@@ -4,6 +4,8 @@ import sklearn.metrics
 import sklearn.model_selection
 
 from minkowski import Data
+from minkowski.utils import get_distances
+from minkowski.utils import histogram2d
 plt.style.use("ggplot")
 
 
@@ -22,6 +24,9 @@ class Predictor:
         self._y = self._data.predictand
 
         self._cross_val_res = None
+        self._variogram = None
+        self._variogram_bins_space = None
+        self._variogram_bins_time = None
 
         self._is_binary = self._data.predictand.dtype == bool
 
@@ -69,6 +74,59 @@ class Predictor:
         for i in range(self._cv_splits):
             res.append(metric(ground_truth[i], prediction[i]))
         return res
+
+    def calc_empirical_variogram(
+        self,
+        idxs=slice(None, None),
+        space_dist_max=3,
+        time_dist_max=10,
+        n_space_bins=10,
+        n_time_bins=10,
+        el_max=1e6,
+    ):
+        residuals = self.get_residuals(idxs)
+        space_coords = self._data.space_coords[idxs, :]
+        time_coords = self._data.time_coords[idxs]
+
+        space_lags, time_lags, sq_val_delta = get_distances(
+            space_coords,
+            time_coords,
+            residuals,
+            space_dist_max,
+            time_dist_max,
+            el_max,
+        )
+
+        space_range = (0, space_dist_max)
+        time_range = (0, time_dist_max)
+        hist, samples_per_bin, bin_width_space, bin_width_time = histogram2d(
+            space_lags,
+            time_lags,
+            n_space_bins,
+            n_time_bins,
+            space_range,
+            time_range,
+            sq_val_delta,
+        )
+
+        # I think this "/2" is necessary, because in samples_per_bin are only
+        # n^2/2 samples in total
+        variogram = np.divide(
+            hist,
+            samples_per_bin,
+            out=np.ones_like(hist) * np.nan,
+            where=samples_per_bin != 0,
+        ) / 2
+
+        bins_space = np.arange(n_space_bins+1) * bin_width_space
+        bins_space = ((bins_space[:-1] + bins_space[1:])/2)
+
+        bins_time = np.arange(n_time_bins+1) * bin_width_time
+        bins_time = ((bins_time[:-1] + bins_time[1:])/2)
+
+        self._variogram = variogram
+        self._variogram_bins_space = bins_space
+        self._variogram_bins_time = bins_time
 
     def plot_cross_validation_roc(self):
         if self._cross_val_res is None:
@@ -134,3 +192,37 @@ class Predictor:
         ax.axis("square")
         ax.legend(loc="lower right")
         plt.show()
+
+    def plot_empirical_variogram(
+        self,
+        fig=None,
+        ax=None,
+        vrange=(None, None),
+        title="",
+    ):
+        if self._variogram is None:
+            raise ValueError("Calc variogram first.")
+        X, Y = np.meshgrid(
+            self._variogram_bins_space,
+            self._variogram_bins_time,
+        )
+        if ax is None:
+            standalone = True
+            fig = plt.figure(figsize=(5, 5))
+            ax = plt.axes(projection='3d')
+        else:
+            standalone = False
+        vmin, vmax = vrange
+        plot = ax.plot_surface(
+            X, Y, self._variogram.T, vmin=vmin, vmax=vmax,
+            cmap="plasma", edgecolor="black", linewidth=0.5,
+        )
+        ax.view_init(elev=35., azim=225)
+        ax.grid(False)
+        ax.set_title(title)
+        ax.set_xlabel("space lag")
+        ax.set_ylabel("time lag")
+        fig.colorbar(plot, fraction=0.044, pad=0.04)
+
+        if standalone:
+            plt.show()

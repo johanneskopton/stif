@@ -23,21 +23,27 @@ class Predictor:
 
         self._cross_val_res = None
 
+        self._is_binary = self._data.predictand.dtype == bool
+
     def fit_covariate_model(self, train_idxs=None):
         if train_idxs is None:
             self._cov_model.fit(self._X, self._y)
         else:
             self._cov_model.fit(self._X[train_idxs, :], self._y[train_idxs])
 
-    def get_covariate_prediction(self, idxs=slice(None)):
-        return self._cov_model.predict(self._X[idxs])
-
     def get_covariate_probability(self, idxs=slice(None)):
-        return self._cov_model.predict_proba(self._X[idxs])[:, 1]
+        if self._is_binary:
+            return self._cov_model.predict_proba(self._X[idxs])[:, 1]
+        else:
+            return self._cov_model.predict(self._X[idxs])
 
     def predict_covariate_probability(self, df):
         X = self._data.prepare_covariates(df)
-        return self._cov_model.predict_proba(X)[:, 1]
+
+        if self._is_binary:
+            return self._cov_model.predict_proba(X)[:, 1]
+        else:
+            return self._cov_model.predict(X)
 
     def get_residuals(self, idxs=slice(None)):
         return self.get_covariate_probability(idxs) - self._y[idxs]
@@ -45,28 +51,23 @@ class Predictor:
     def calc_cross_validation(self):
         cv = sklearn.model_selection.TimeSeriesSplit(n_splits=self._cv_splits)
         ground_truth = []
-        pred_probability = []
-        pred = []
+        prediction = []
         for fold, (train, test) in enumerate(cv.split(self._X, self._y)):
             self.fit_covariate_model(train)
             ground_truth.append(self._y[test])
-            pred_probability.append(self.get_covariate_probability(test))
-            pred.append(self.get_covariate_prediction(test))
+            prediction.append(self.get_covariate_probability(test))
 
-        self._cross_val_res = ground_truth, pred_probability, pred
+        self._cross_val_res = ground_truth, prediction
 
-    def get_cross_val_metric(self, metric, apply_on_prob=True):
+    def get_cross_val_metric(self, metric):
         if self._cross_val_res is None:
             self.calc_cross_validation()
 
-        ground_truth, pred_probability, pred = self._cross_val_res
+        ground_truth, prediction = self._cross_val_res
 
         res = []
         for i in range(self._cv_splits):
-            if apply_on_prob:
-                res.append(metric(ground_truth[i], pred_probability[i]))
-            else:
-                res.append(metric(ground_truth[i], pred[i]))
+            res.append(metric(ground_truth[i], prediction[i]))
         return res
 
     def plot_cross_validation_roc(self):

@@ -20,80 +20,83 @@ def gaussian(h, r, c0, b=0):
 
 
 @nb.njit(fastmath=True)
-def sum_model(h, t, x, models):
+def sum_model(h, t, x, model_space, model_time, model_metric):
     r_s, r_t, c0_s, c0_t, b_s, b_t = x[0], x[1], x[2], x[3], x[4], x[5]
-    return models[0](h, r_s, c0_s, b_s) + models[1](t, r_t, c0_t, b_t)
+    return model_space(h, r_s, c0_s, b_s) + model_time(t, r_t, c0_t, b_t)
 
 
 @nb.njit(fastmath=True)
-def product_model(h, t, x, models):
+def product_model(h, t, x, model_space, model_time, model_metric):
     r_s, r_t, c0_s, c0_t, b_s, b_t = x[0], x[1], x[2], x[3], x[4], x[5]
-    return models[0](h, r_s, c0_s, b_s) * models[1](t, r_t, c0_t, b_t)
+    return model_space(h, r_s, c0_s, b_s) * model_time(t, r_t, c0_t, b_t)
 
 
 @nb.njit(fastmath=True)
-def product_sum_model(h, t, x, models):
+def product_sum_model(h, t, x, model_space, model_time, model_metric):
     k = x[6]
-    return k * product_model(h, t, x[:-1], models)\
-        + product_model(h, t, x[:-1], models)
+    return k * product_model(h, t, x[:-1], model_space, model_time, None)\
+        + product_model(h, t, x[:-1], model_space, model_time, None)
 
 
 @nb.njit(fastmath=True)
-def metric_model(h, t, x, models):
+def metric_model(h, t, x, model_space, model_time, model_metric):
     r, c0, b, ani = x[0], x[1], x[2], x[3]
     metric_dist = math.sqrt(h*h + ani*ani*t*t)
-    return models[2](metric_dist, r, c0, b)
+    return model_metric(metric_dist, r, c0, b)
 
 
 @nb.njit(fastmath=True)
-def sum_metric_model(h, t, x, models):
+def sum_metric_model(h, t, x, model_space, model_time, model_metric):
     r_s, r_t, r_m, c0_s, c0_t, c0_m, b_s, b_t, b_m, ani = \
         x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9]
     metric_dist = math.sqrt(h*h + ani*ani*t*t)
-    return sum_model(h, t, [r_s, r_t, c0_s, c0_t, b_s, b_t], models)\
-        + models[2](metric_dist, r_m, c0_m, b_m)
+    x_sum = [r_s, r_t, c0_s, c0_t, b_s, b_t]
+    return sum_model(h, t, x_sum, model_space, model_time, None)\
+        + model_metric(metric_dist, r_m, c0_m, b_m)
 
 
 @nb.njit()
 def prediction_grid(
     x,
     st_model,
-    models,
-    bins_spatial,
-    bins_temporal,
+    model_space, model_time, model_metric,
+    bins_space,
+    bins_time,
 ):
     variogram = np.empty(
-        (len(bins_spatial), len(bins_temporal)), dtype=np.double,
+        (len(bins_space), len(bins_time)), dtype=np.double,
     )
-    for i, h in enumerate(bins_spatial):
-        for j, t in enumerate(bins_temporal):
-            variogram[i, j] = st_model(h, t, x, models)
+    for i, h in enumerate(bins_space):
+        for j, t in enumerate(bins_time):
+            variogram[i, j] = st_model(
+                h, t, x, model_space, model_time, model_metric,
+            )
     return variogram
 
 
 def weighted_mean_square_error(
     x,
     st_model,
-    models,
+    model_space, model_time, model_metric,
     empirical_variogram,
     weights,
 ):
     n_space_bins, n_time_bins = empirical_variogram.shape
     prediction = prediction_grid(
         x,
-        st_model, models,
+        st_model, model_space, model_time, model_metric,
         n_space_bins, n_time_bins,
     )
     error_grid = empirical_variogram - prediction
     return np.average(np.square(error_grid), weights=weights)
 
 
-def calc_weights(space_bins, time_bins, ani, samples_per_bin):
-    n_space_bins = len(space_bins)
-    n_time_bins = len(time_bins)
+def calc_weights(bins_space, bins_time, ani, samples_per_bin):
+    n_space_bins = len(bins_space)
+    n_time_bins = len(bins_time)
 
-    distances_sq = np.square(ani * np.tile(time_bins, [n_space_bins, 1]))\
-        + np.square(np.tile(np.expand_dims(space_bins, 0).T, [1, n_time_bins]))
+    distances_sq = np.square(ani * np.tile(bins_time, [n_space_bins, 1]))\
+        + np.square(np.tile(np.expand_dims(bins_space, 0).T, [1, n_time_bins]))
 
     # looks better but without sqrt in literature
     weights = samples_per_bin.astype(float) / np.sqrt(distances_sq)

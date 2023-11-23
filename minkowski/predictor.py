@@ -340,3 +340,30 @@ class Predictor:
 
         if standalone:
             plt.show()
+
+    def plot_variogrmam_model_comparison(
+        self,
+        space_model="spherical",
+        time_model="spherical",
+        metric_model="spherical",
+    ):
+        fig = plt.figure(figsize=(15, 10))
+        ax = fig.add_subplot(2, 3, 1, projection='3d')
+        self.plot_empirical_variogram(fig, ax, title="empirical")
+
+        models = ["sum", "product", "product_sum", "metric", "sum_metric"]
+        for i, model in enumerate(models):
+            self.fit_variogram_model(
+                st_model=model,
+                space_model=space_model,
+                time_model=time_model,
+                metric_model=metric_model,
+            )
+            grid = self.get_variogram_model_grid()
+            wmse = self._variogram_fit.fun
+            ax = fig.add_subplot(2, 3, i+2, projection='3d')
+            self._plot_variogram(
+                grid, fig, ax,
+                title="{} (MSE={:.3f})".format(model, wmse),
+            )
+        plt.show()

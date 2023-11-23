@@ -116,15 +116,20 @@ def get_initial_parameters(
     r_m = space_dist_max  # range metric
 
     c0_s = empirical_variogram[:, 0].max()  # sill space
-    c0_t = empirical_variogram[0, :].max() - c0_s  # sill time
+    c0_t = empirical_variogram[0, :].max()  # sill time
     c0_m = empirical_variogram.max()  # sill metric
 
     b = empirical_variogram.min() / 2  # half nugget
 
     initial_params_dict = {
         "sum": [r_s, r_t, c0_s, c0_t, b, b],
-        "product": [r_s, r_t, c0_s, c0_t, b, b],
-        "product_sum": [r_s, r_t, c0_s/2, c0_t/2, b/2, b/2, 0.5],
+        "product": [
+            r_s, r_t, np.sqrt(c0_s), np.sqrt(c0_t), np.sqrt(b), np.sqrt(b),
+        ],
+        "product_sum": [
+            r_s, r_t, np.sqrt(c0_s)/2, np.sqrt(c0_t)/2,
+            np.sqrt(b/2), np.sqrt(b/2), 0.5,
+        ],
         "metric": [r_m, c0_m, b*2, ani],
         "sum_metric": [
             r_s, r_t, r_m, c0_s/2, c0_t/2, c0_m/2, b/2, b/2, b, ani,

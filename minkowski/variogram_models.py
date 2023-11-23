@@ -78,14 +78,14 @@ def weighted_mean_square_error(
     x,
     st_model,
     model_space, model_time, model_metric,
+    bins_space, bins_time,
     empirical_variogram,
     weights,
 ):
-    n_space_bins, n_time_bins = empirical_variogram.shape
     prediction = prediction_grid(
         x,
         st_model, model_space, model_time, model_metric,
-        n_space_bins, n_time_bins,
+        bins_space, bins_time,
     )
     error_grid = empirical_variogram - prediction
     return np.average(np.square(error_grid), weights=weights)

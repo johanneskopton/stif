@@ -30,6 +30,7 @@ setup(
         "geopandas",
         "scikit-learn",
         "numba",
+        "scipy",
     ],
     extras_require={
         "dev": [

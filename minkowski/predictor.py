@@ -2,10 +2,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sklearn.metrics
 import sklearn.model_selection
+from scipy.optimize import minimize
 
 from minkowski import Data
 from minkowski.utils import get_distances
 from minkowski.utils import histogram2d
+from minkowski.variogram_models import calc_weights
+from minkowski.variogram_models import get_initial_parameters
+from minkowski.variogram_models import prediction_grid
+from minkowski.variogram_models import variogram_model_dict
+from minkowski.variogram_models import weighted_mean_square_error
 plt.style.use("ggplot")
 
 
@@ -127,6 +133,94 @@ class Predictor:
         self._variogram = variogram
         self._variogram_bins_space = bins_space
         self._variogram_bins_time = bins_time
+        self._variogram_samples_per_bin = samples_per_bin
+
+    def fit_variogram_model(
+        self,
+        st_model="sum_metric",
+        space_model="spherical",
+        time_model="spherical",
+        metric_model="spherical",
+        plot_anisotropy=False,
+    ):
+        slope_space = np.polynomial.polynomial.polyfit(
+            self._variogram_bins_space, self._variogram[:, 0], deg=1,
+        )[1]
+        slope_time = np.polynomial.polynomial.polyfit(
+            self._variogram_bins_time, self._variogram[0, :], deg=1,
+        )[1]
+        ani = slope_time / slope_space
+
+        if plot_anisotropy:
+            fig, ax = plt.subplots()
+            ax.scatter(
+                self._variogram_bins_space/ani,
+                self._variogram[:, 0], label="rescaled spatial",
+            )
+            ax.scatter(
+                self._variogram_bins_time,
+                self._variogram[0, :], label="temporal",
+            )
+            ax.set_xlabel("lag")
+            ax.set_ylabel("variance")
+            ax.set_title("Anisotropy coefficient: {:.3}".format(ani))
+            ax.legend()
+            plt.show()
+
+        weights = calc_weights(
+            self._variogram_bins_space,
+            self._variogram_bins_time,
+            ani,
+            self._variogram_samples_per_bin,
+        )
+
+        initial_params = get_initial_parameters(
+            st_model,
+            self._variogram,
+            self._variogram_bins_space[-1],
+            self._variogram_bins_time[-1],
+            ani,
+        )
+
+        variogram_fit = minimize(
+            weighted_mean_square_error,
+            initial_params,
+            args=(
+                variogram_model_dict[st_model],
+                variogram_model_dict[space_model],
+                variogram_model_dict[time_model],
+                variogram_model_dict[metric_model],
+                self._variogram_bins_space,
+                self._variogram_bins_time,
+                self._variogram,
+                weights,
+            ),
+            method="Nelder-Mead",
+            options={"maxiter": 10000},
+        )
+
+        self._variogram_fit = variogram_fit
+        self._variogram_models = [
+            st_model, space_model, time_model, metric_model,
+        ]
+
+    def get_variogram_model_grid(self):
+        if self._variogram_fit is None:
+            raise ValueError("Fit variogram model first.")
+
+        st_model, space_model, time_model, metric_model = \
+            self._variogram_models
+
+        grid = prediction_grid(
+            self._variogram_fit.x,
+            variogram_model_dict[st_model],
+            variogram_model_dict[space_model],
+            variogram_model_dict[time_model],
+            variogram_model_dict[metric_model],
+            self._variogram_bins_space,
+            self._variogram_bins_time,
+        )
+        return grid
 
     def plot_cross_validation_roc(self):
         if self._cross_val_res is None:

@@ -94,3 +94,28 @@ def test_empirical_variogram():
 
     assert np.isclose(predictor._variogram.min(), 27.8, rtol=0.1)
     assert np.isclose(predictor._variogram.max(), 136.0, rtol=0.1)
+
+
+def test_fit_variogram_model():
+    data = Data(
+        df,
+        space_cols=["x", "y"],
+        time_col="time",
+        predictand_col="PM10",
+        covariate_cols=["x", "y", "time"],
+    )
+
+    covariate_model = LinearRegression()
+    predictor = Predictor(data, covariate_model)
+    predictor.fit_covariate_model()
+
+    predictor.calc_empirical_variogram(
+        space_dist_max=6e5,
+        time_dist_max=7,
+        n_time_bins=7,
+        el_max=1e8,
+    )
+
+    predictor.fit_variogram_model()
+
+    assert np.isclose(5.36, predictor._variogram_fit.fun, rtol=0.2)

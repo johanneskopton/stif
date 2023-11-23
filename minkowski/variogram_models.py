@@ -98,8 +98,9 @@ def calc_weights(bins_space, bins_time, ani, samples_per_bin):
     distances_sq = np.square(ani * np.tile(bins_time, [n_space_bins, 1]))\
         + np.square(np.tile(np.expand_dims(bins_space, 0).T, [1, n_time_bins]))
 
-    # looks better but without sqrt in literature
-    weights = samples_per_bin.astype(float) / np.sqrt(distances_sq)
+    # maybe looks better with plain 1/distance?
+    # but 1/distance_sq is in literature
+    weights = samples_per_bin.astype(float) / distances_sq
 
     # normalize weights
     weights /= np.max(weights)

@@ -253,12 +253,12 @@ class Predictor:
         mean_fpr = np.linspace(0, 1, 100)
         fig, ax = plt.subplots(figsize=(6, 6))
 
-        ground_truth, pred_probability, pred = self._cross_val_res
+        ground_truth, pred = self._cross_val_res
 
         for fold in range(self._cv_splits):
             viz = sklearn.metrics.RocCurveDisplay.from_predictions(
                 ground_truth[fold],
-                pred_probability[fold],
+                pred[fold],
                 name=f"ROC fold {fold}",
                 alpha=0.3,
                 lw=1,

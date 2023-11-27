@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numba as nb
 import numpy as np
 import sklearn.metrics
 import sklearn.model_selection
@@ -33,6 +34,7 @@ class Predictor:
         self._variogram = None
         self._variogram_bins_space = None
         self._variogram_bins_time = None
+        self._variogram_model_function = None
 
         self._is_binary = self._data.predictand.dtype == bool
 
@@ -135,6 +137,32 @@ class Predictor:
         self._variogram_bins_time = bins_time
         self._variogram_samples_per_bin = samples_per_bin
 
+    def _create_variogram_model_function(self):
+        if self._variogram_fit is None:
+            raise ValueError("Fit variogram model first.")
+
+        st_model, space_model, time_model, metric_model = \
+            self._variogram_models
+
+        st_model_fun = variogram_model_dict[st_model]
+        space_model_fun = variogram_model_dict[space_model]
+        time_model_fun = variogram_model_dict[time_model]
+        metric_model_fun = variogram_model_dict[metric_model]
+        x = self._variogram_fit.x
+
+        @nb.vectorize([nb.float64(nb.float64, nb.float64)])
+        def variogram_model(h, t):
+            return st_model_fun(
+                h,
+                t,
+                x,
+                space_model_fun,
+                time_model_fun,
+                metric_model_fun,
+            )
+
+        return variogram_model
+
     def fit_variogram_model(
         self,
         st_model="sum_metric",
@@ -203,6 +231,8 @@ class Predictor:
         self._variogram_models = [
             st_model, space_model, time_model, metric_model,
         ]
+        self._variogram_model_function = \
+            self._create_variogram_model_function()
 
     def get_variogram_model_grid(self):
         if self._variogram_fit is None:

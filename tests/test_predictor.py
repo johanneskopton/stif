@@ -14,7 +14,7 @@ from minkowski import Predictor
 from minkowski import sinusodial_feature_transform
 
 
-def test_init_covariance_predictor_binary():
+def test_covariance_predictor_binary():
     data = Data(
         df_binary,
         space_cols=["x", "y"],
@@ -32,7 +32,7 @@ def test_init_covariance_predictor_binary():
         assert np.isclose(cv_aucs[-1], target_aucs[i], rtol=0.1)
 
 
-def test_init_covariance_predictor_transformation_binary():
+def test_covariance_predictor_transformation_binary():
     data = Data(
         df_binary,
         space_cols=["x", "y"],

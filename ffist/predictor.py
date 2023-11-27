@@ -5,13 +5,13 @@ import sklearn.metrics
 import sklearn.model_selection
 from scipy.optimize import minimize
 
-from minkowski import Data
-from minkowski.utils import get_distances
-from minkowski.utils import histogram2d
-from minkowski.variogram_models import calc_weights
-from minkowski.variogram_models import get_initial_parameters
-from minkowski.variogram_models import variogram_model_dict
-from minkowski.variogram_models import weighted_mean_square_error
+from ffist import Data
+from ffist.utils import get_distances
+from ffist.utils import histogram2d
+from ffist.variogram_models import calc_weights
+from ffist.variogram_models import get_initial_parameters
+from ffist.variogram_models import variogram_model_dict
+from ffist.variogram_models import weighted_mean_square_error
 plt.style.use("seaborn-v0_8-whitegrid")
 
 

@@ -1,6 +1,8 @@
-# Minkowski
+# FFIST ✊
 
-Predicting spatio-temporally distributed variables using space-time regression kriging using numpy and numba.
+"Fast Forecasting and Interpolation in Space and Time"
+
+Package for prediction spatio-temporally distributed variables using space-time regression kriging using numpy and numba.
 
 ## Installation
 

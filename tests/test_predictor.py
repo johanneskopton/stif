@@ -41,7 +41,11 @@ def test_covariance_predictor_transformation_binary():
         covariate_transformations={
             "x": sinusodial_feature_transform,
             "y": sinusodial_feature_transform,
-            "time": lambda x: sinusodial_feature_transform(x, 5),
+            "time": lambda x: sinusodial_feature_transform(
+                x,
+                n_freqs=5,
+                full_circle=365,
+            ),
         },
     )
     covariate_model = MLPClassifier(

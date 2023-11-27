@@ -7,9 +7,12 @@ import pandas as pd
 
 
 @nb.njit(fastmath=True)
-def sinusodial_feature_transform(x, n_freqs=6):
+def sinusodial_feature_transform(x, n_freqs=6, full_circle=None):
+    if full_circle is None:
+        full_circle = x.max() - x.min()
+
     x = x.copy()
-    x *= 2 * math.pi
+    x = x / full_circle * 2 * math.pi
     res = np.empty((len(x), n_freqs), dtype=float)
 
     for i in range(n_freqs):
@@ -90,12 +93,13 @@ class Data:
         X = np.empty((len(df), 0), dtype=float)
         for i, covariate_col in enumerate(self._covariate_cols):
             col_array = df[covariate_col].to_numpy(copy=True)
-            if self._normalize:
-                col_array = self.normalize(col_array, covariate_col)
             if covariate_col in self._covariate_transformations.keys():
                 col_array = self._covariate_transformations[covariate_col](
                     col_array,
                 )
+            elif self._normalize:
+                col_array = self.normalize(col_array, covariate_col)
+
             X = np.c_[X, col_array]
         return X
 

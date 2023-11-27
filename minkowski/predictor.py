@@ -244,7 +244,7 @@ class Predictor:
         )
         return self._variogram_model_function(h, t)
 
-    def plot_cross_validation_roc(self):
+    def plot_cross_validation_roc(self, target="screen"):
         if self._cross_val_res is None:
             self.calc_cross_validation()
 
@@ -307,7 +307,11 @@ class Predictor:
         )
         ax.axis("square")
         ax.legend(loc="lower right")
-        plt.show()
+
+        if target == "screen":
+            plt.show()
+        else:
+            fig.savefig(target)
 
     def plot_empirical_variogram(
         self,
@@ -368,6 +372,7 @@ class Predictor:
         space_model="spherical",
         time_model="spherical",
         metric_model="spherical",
+        target="screen",
     ):
         fig = plt.figure(figsize=(15, 10))
         ax = fig.add_subplot(2, 3, 1, projection='3d')
@@ -388,4 +393,8 @@ class Predictor:
                 grid, fig, ax,
                 title="{} (MSE={:.3f})".format(model, wmse),
             )
-        plt.show()
+        fig.tight_layout()
+        if target == "screen":
+            plt.show()
+        else:
+            fig.savefig(target)

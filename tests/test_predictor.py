@@ -1,3 +1,5 @@
+import tempfile
+
 import numpy as np
 import sklearn.metrics
 from sklearn.ensemble import RandomForestClassifier
@@ -53,6 +55,9 @@ def test_init_covariance_predictor_transformation_binary():
         covariate_model=covariate_model,
     )
     cv_aucs = predictor.get_cross_val_metric(sklearn.metrics.roc_auc_score)
+    predictor.plot_cross_validation_roc(
+        target=tempfile.NamedTemporaryFile(delete=True),
+    )
 
     assert np.isclose(cv_aucs, [0.7, 0.53, 0.7], rtol=0.1).all()
 
@@ -117,5 +122,8 @@ def test_fit_variogram_model():
     )
 
     predictor.fit_variogram_model()
+    predictor.plot_variogram_model_comparison(
+        target=tempfile.NamedTemporaryFile(delete=True),
+    )
 
     assert np.isclose(5.36, predictor._variogram_fit.fun, rtol=0.2)

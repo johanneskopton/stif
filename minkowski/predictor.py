@@ -263,13 +263,15 @@ class Predictor:
                 alpha=0.3,
                 lw=1,
                 ax=ax,
-                # commented out for compatibility with older sklearn and cuml
+                # plot_manually for compatibility with older sklearn and cuml
                 # plot_chance_level=(fold == self._cv_splits - 1),
             )
             interp_tpr = np.interp(mean_fpr, viz.fpr, viz.tpr)
             interp_tpr[0] = 0.0
             tprs.append(interp_tpr)
             aucs.append(viz.roc_auc)
+
+        ax.plot([0, 1], [0, 1], color="k")
 
         mean_tpr = np.mean(tprs, axis=0)
         mean_tpr[-1] = 1.0

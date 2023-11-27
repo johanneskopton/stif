@@ -10,7 +10,6 @@ from minkowski.utils import get_distances
 from minkowski.utils import histogram2d
 from minkowski.variogram_models import calc_weights
 from minkowski.variogram_models import get_initial_parameters
-from minkowski.variogram_models import prediction_grid
 from minkowski.variogram_models import variogram_model_dict
 from minkowski.variogram_models import weighted_mean_square_error
 plt.style.use("ggplot")
@@ -238,19 +237,12 @@ class Predictor:
         if self._variogram_fit is None:
             raise ValueError("Fit variogram model first.")
 
-        st_model, space_model, time_model, metric_model = \
-            self._variogram_models
-
-        grid = prediction_grid(
-            self._variogram_fit.x,
-            variogram_model_dict[st_model],
-            variogram_model_dict[space_model],
-            variogram_model_dict[time_model],
-            variogram_model_dict[metric_model],
+        h, t = np.meshgrid(
             self._variogram_bins_space,
             self._variogram_bins_time,
+            indexing="ij",
         )
-        return grid
+        return self._variogram_model_function(h, t)
 
     def plot_cross_validation_roc(self):
         if self._cross_val_res is None:

@@ -48,23 +48,17 @@ class Predictor:
         if self._is_binary and \
                 self._cov_model.__class__.__module__ !=\
                 "keras.src.engine.sequential":
-            return self._cov_model.predict_proba
-
-        return self._cov_model.predict
+            def res(X): return self._cov_model.predict_proba(X)[:, 1]
+        else:
+            res = self._cov_model.predict
+        return res
 
     def get_covariate_probability(self, idxs=slice(None)):
-        if self._is_binary:
-            return self._covariate_prediction_function(self._X[idxs])[:, 1]
-        else:
-            return self._covariate_prediction_function(self._X[idxs])
+        return self._covariate_prediction_function(self._X[idxs])
 
     def predict_covariate_probability(self, df):
         X = self._data.prepare_covariates(df)
-
-        if self._is_binary:
-            return self._cov_model.predict_proba(X)[:, 1]
-        else:
-            return self._cov_model.predict(X)
+        return self._cov_model.predict(X)
 
     def get_residuals(self, idxs=slice(None)):
         return self.get_covariate_probability(idxs) - self._y[idxs]

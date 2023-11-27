@@ -12,7 +12,7 @@ from minkowski.variogram_models import calc_weights
 from minkowski.variogram_models import get_initial_parameters
 from minkowski.variogram_models import variogram_model_dict
 from minkowski.variogram_models import weighted_mean_square_error
-plt.style.use("ggplot")
+plt.style.use("seaborn-v0_8-whitegrid")
 
 
 class Predictor:
@@ -376,7 +376,7 @@ class Predictor:
         metric_model="spherical",
         target="screen",
     ):
-        fig = plt.figure(figsize=(15, 10))
+        fig = plt.figure(figsize=(17, 10))
         ax = fig.add_subplot(2, 3, 1, projection='3d')
         self.plot_empirical_variogram(fig, ax, title="empirical")
 

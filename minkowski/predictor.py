@@ -369,7 +369,7 @@ class Predictor:
         if standalone:
             plt.show()
 
-    def plot_variogrmam_model_comparison(
+    def plot_variogram_model_comparison(
         self,
         space_model="spherical",
         time_model="spherical",

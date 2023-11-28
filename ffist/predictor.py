@@ -125,7 +125,7 @@ class Predictor:
 
     def calc_empirical_variogram(
         self,
-        idxs=slice(None, None),
+        idxs=slice(None),
         space_dist_max=3,
         time_dist_max=10,
         n_space_bins=10,

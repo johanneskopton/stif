@@ -33,6 +33,9 @@ setup(
         "scipy",
     ],
     extras_require={
+        "tensorflow": [
+            "tensorflow",
+        ],
         "dev": [
             "pytest",
             "flake8",

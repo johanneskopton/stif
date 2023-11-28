@@ -1,9 +1,18 @@
+import pickle
+import typing
+
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
 import sklearn.metrics
 import sklearn.model_selection
 from scipy.optimize import minimize
+
+try:
+    from tensorflow import keras
+    KERAS_INSTALLED = True
+except ImportError:
+    KERAS_INSTALLED = False
 
 from ffist import Data
 from ffist.utils import get_distances
@@ -15,11 +24,24 @@ from ffist.variogram_models import weighted_mean_square_error
 plt.style.use("seaborn-v0_8-whitegrid")
 
 
+if KERAS_INSTALLED:
+    model_types = typing.Union[
+        keras.models.Sequential,
+        sklearn.base.BaseEstimator,
+        None,
+    ]
+else:
+    model_types = typing.Union[
+        sklearn.base.BaseEstimator,
+        None,
+    ]
+
+
 class Predictor:
     def __init__(
         self,
         data: Data,
-        covariate_model: sklearn.base.ClassifierMixin,
+        covariate_model: model_types = None,
         cv_splits: int = 5,
     ):
         self._data = data
@@ -36,18 +58,34 @@ class Predictor:
         self._variogram_model_function = None
 
         self._is_binary = self._data.predictand.dtype == bool
+        self._is_keras_model = self._cov_model.__class__.__module__ ==\
+            "keras.src.engine.sequential"
 
-    def fit_covariate_model(self, train_idxs=None):
-        if train_idxs is None:
-            self._cov_model.fit(self._X, self._y)
+    def fit_covariate_model(self, train_idxs=slice(None)):
+        self._cov_model.fit(self._X[train_idxs, :], self._y[train_idxs])
+
+    def save_covariate_model(self, filename):
+        if self._is_keras_model:
+            self._cov_model.save(filename)
         else:
-            self._cov_model.fit(self._X[train_idxs, :], self._y[train_idxs])
+            with open(filename, 'wb') as file:
+                pickle.dump(self._cov_model, file)
+
+    def load_covariate_model(self, filename):
+        if self._is_keras_model:
+            if not KERAS_INSTALLED:
+                raise ImportError(
+                    "Keras is not installed."
+                    "Please install Keras to load a Keras model.",
+                )
+            self._cov_model = keras.models.load_model(filename)
+        else:
+            with open(filename, 'rb') as file:
+                self._cov_model = pickle.load(file)
 
     @property
     def _covariate_prediction_function(self):
-        if self._is_binary and \
-                self._cov_model.__class__.__module__ !=\
-                "keras.src.engine.sequential":
+        if self._is_binary and not self._is_keras_model:
             def res(X): return self._cov_model.predict_proba(X)[:, 1]
         else:
             res = self._cov_model.predict

@@ -1,3 +1,4 @@
+import os
 import tempfile
 
 import numpy as np
@@ -80,6 +81,31 @@ def test_residuals_binary():
     residuals = predictor.get_residuals()
     assert np.isclose(residuals.mean(), 0, atol=1e-4)
     assert np.isclose(residuals.std(), 0.46, rtol=0.1)
+
+
+def test_save_covariate_model_sklearn():
+    data = Data(
+        df_binary,
+        space_cols=["x", "y"],
+        time_col="time",
+        covariate_cols=["x", "y", "time"],
+    )
+
+    covariate_model = LogisticRegression(random_state=0)
+    predictor1 = Predictor(data, covariate_model)
+    predictor2 = Predictor(data, None)
+
+    predictor1.fit_covariate_model()
+    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        temp_filename = temp_file.name
+        predictor1.save_covariate_model(temp_filename)
+        predictor2.load_covariate_model(temp_filename)
+    os.remove(temp_filename)
+
+    residuals1 = predictor1.get_residuals()
+    residuals2 = predictor2.get_residuals()
+
+    assert np.isclose(residuals1, residuals2, rtol=0.1).all()
 
 
 def test_empirical_variogram():

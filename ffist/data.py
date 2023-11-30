@@ -94,12 +94,12 @@ class Data:
         for i, covariate_col in enumerate(self._covariate_cols):
             col_array = df[covariate_col].to_numpy(copy=True)
             if covariate_col in self._covariate_transformations.keys():
-                col_array = self._covariate_transformations[covariate_col](
+                col_trans = self._covariate_transformations[covariate_col](
                     col_array,
                 )
-            elif self._normalize:
+                X = np.c_[X, col_trans]
+            if self._normalize:
                 col_array = self.normalize(col_array, covariate_col)
-
             X = np.c_[X, col_array]
         return X
 

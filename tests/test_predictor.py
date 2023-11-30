@@ -44,13 +44,13 @@ def test_covariance_predictor_transformation_binary():
             "y": sinusodial_feature_transform,
             "time": lambda x: sinusodial_feature_transform(
                 x,
-                n_freqs=5,
+                n_freqs=2,
                 full_circle=365,
             ),
         },
     )
     covariate_model = MLPClassifier(
-        hidden_layer_sizes=[5],
+        hidden_layer_sizes=[3],
         random_state=0,
         max_iter=500,
     )
@@ -64,7 +64,7 @@ def test_covariance_predictor_transformation_binary():
         target=tempfile.NamedTemporaryFile(delete=True),
     )
 
-    assert np.isclose(cv_aucs, [0.7, 0.53, 0.7], rtol=0.1).all()
+    assert np.allclose(cv_aucs, [0.6, 0.5, 0.66], rtol=0.1)
 
 
 def test_residuals_binary():

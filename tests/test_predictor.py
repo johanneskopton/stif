@@ -147,7 +147,7 @@ def test_save_covariate_model_sklearn():
     residuals1 = predictor1.get_residuals()
     residuals2 = predictor2.get_residuals()
 
-    assert np.isclose(residuals1, residuals2, rtol=0.1).all()
+    assert np.allclose(residuals1, residuals2, rtol=0.1)
 
 
 def test_empirical_variogram():

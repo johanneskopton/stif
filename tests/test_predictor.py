@@ -1,7 +1,9 @@
+import math
 import os
 import tempfile
 
 import numpy as np
+import pandas as pd
 import sklearn.metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression
@@ -31,6 +33,46 @@ def test_covariance_predictor_binary():
         predictor = Predictor(data, covariate_model)
         cv_aucs = predictor.get_cross_val_metric(sklearn.metrics.roc_auc_score)
         assert np.isclose(cv_aucs[-1], target_aucs[i], rtol=0.1)
+
+
+def test_sinusodials():
+    n = 10000
+    time = np.random.uniform(0, 1000, n)
+    data = {
+        "x": np.random.uniform(0, 10, n),
+        "y": np.random.uniform(0, 10, n),
+        "time": time,
+        "predictand": (time*0.001 + np.sin(time/365*2*math.pi)) > 0.5,
+    }
+    d = pd.DataFrame(data)
+
+    data = Data(
+        d,
+        space_cols=["x", "y"],
+        time_col="time",
+        covariate_cols=["x", "y", "time"],
+        covariate_transformations={
+            "x": sinusodial_feature_transform,
+            "y": sinusodial_feature_transform,
+            "time": lambda x: sinusodial_feature_transform(
+                x,
+                n_freqs=5,
+                full_circle=365,
+            ),
+        },
+    )
+    covariate_model = MLPClassifier(
+        hidden_layer_sizes=[2],
+        random_state=0,
+        max_iter=1000,
+    )
+    predictor = Predictor(
+        data,
+        cv_splits=3,
+        covariate_model=covariate_model,
+    )
+    cv_aucs = predictor.get_cross_val_metric(sklearn.metrics.roc_auc_score)
+    assert np.allclose(cv_aucs, [1, 1, 1], rtol=0.02)
 
 
 def test_covariance_predictor_transformation_binary():

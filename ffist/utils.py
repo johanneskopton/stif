@@ -89,30 +89,46 @@ def histogram2d(
     return hist, norm, bin_width_x, bin_width_y
 
 
-def calc_kriging_weights(
+def nd_kriging(
+    space, time,
+    kriging_idxs,
+    min_kriging_points, max_kriging_points,
+    space_coords, time_coords,
     variogram_model_function,
-    kriging_vector,
-    coords_spatial,
-    coords_temporal,
+    kriging_weights_function,
 ):
-    n = len(kriging_vector)
-    spatial_dist = calc_distance_matrix_2d(coords_spatial)
-    temporal_dist = calc_distance_matrix_1d(coords_temporal)
-    A = variogram_model_function(spatial_dist, temporal_dist)
+    n_targets = len(time)
+    kriging_weights = np.zeros((n_targets, max_kriging_points), dtype=float)
+    kriging_idx_matrix = np.zeros((n_targets, max_kriging_points), dtype=int)
+    for target_i in range(n_targets):
+        kriging_idxs_target = kriging_idxs[kriging_idxs[:, 1] == target_i, 0]
+        if len(kriging_idxs_target) < min_kriging_points:
+            kriging_weights[target_i, :] = np.nan
+        h = np.sqrt(
+            np.sum(
+                np.square(
+                    space_coords[kriging_idxs_target, :] -
+                    space[target_i, :],
+                ), axis=1,
+            ),
+        )
+        t = np.abs(time_coords[kriging_idxs_target] - time[target_i])
+        kriging_vector = variogram_model_function(h, t)
+        if len(kriging_idxs_target) > max_kriging_points:
+            lowest_idxs = np.argsort(kriging_vector)[:max_kriging_points]
+            kriging_idxs_target = kriging_idxs_target[lowest_idxs]
+            kriging_vector = kriging_vector[lowest_idxs]
 
-    # for Lagrange multiplier
-    A = np.c_[A, np.ones(n)]
-    A = np.r_[A, [np.ones(n+1)]]
-    A[-1, -1] = 0
-
-    b = kriging_vector
-
-    # for Lagrange multiplier
-    b = np.append(b, 1)
-
-    w = np.linalg.lstsq(A, b, rcond=None)[0]
-
-    # remove Lagrange multiplier
-    w = w[:-1]
-
-    return w
+        space_coords_local = space_coords[kriging_idxs_target, :]
+        time_coords_local = time_coords[kriging_idxs_target]
+        kriging_weights[
+            target_i,
+            :len(kriging_vector),
+        ] = kriging_weights_function(
+            kriging_vector,
+            space_coords_local,
+            time_coords_local,
+        )
+        kriging_idx_matrix[target_i, :len(kriging_idxs_target)] =\
+            kriging_idxs_target
+    return kriging_weights, kriging_idx_matrix

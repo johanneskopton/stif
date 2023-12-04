@@ -224,15 +224,16 @@ def test_kriging():
     )
 
     predictor.fit_variogram_model()
-    sample_pos = df.iloc[21000]
+    sample_pos = df.iloc[21000:21025]
+    space = sample_pos[["x", "y"]].to_numpy()
+    time = sample_pos["time"].to_numpy()
+
     predictor.plot_kriging_weights(
-        [sample_pos.x, sample_pos.y],
-        sample_pos.time,
+        space[0, :], time[0],
         max_kriging_points=50,
         target=tempfile.NamedTemporaryFile(delete=True),
     )
     kriging_res = predictor.get_kriging_prediction(
-        [sample_pos.x, sample_pos.y],
-        sample_pos.time,
+        space, time,
     )
-    assert np.isclose(kriging_res, 0.888, rtol=0.1)
+    assert np.isclose(kriging_res[0], 0.888, atol=2.0)

@@ -4,6 +4,7 @@ from functools import cached_property
 import numba as nb
 import numpy as np
 import pandas as pd
+import scipy.spatial.distance
 
 
 @nb.njit(fastmath=True)
@@ -115,11 +116,18 @@ class Data:
     ):
         """Get the indices of the training data that are within the
         specified spatial and temporal distance."""
-        space_dist_sq = np.sum((self.space_coords - space)**2, axis=1)
-        time_dist = np.abs(self.time_coords - time)
+        # space_dist_sq = np.sum((self.space_coords - space)**2, axis=1)
+        space_dist_sq = scipy.spatial.distance.cdist(
+            self.space_coords,
+            space,
+            metric='sqeuclidean',
+        )
+        time_dist = scipy.spatial.distance.cdist(
+            self.time_coords.reshape(-1, 1), time.reshape(-1, 1),
+        )
         is_close_enough = (
             (space_dist_sq < space_dist_max**2) &
             (time_dist < time_dist_max) &
-            (self.time_coords < time)
+            (self.time_coords.reshape(-1, 1) < time.reshape(1, -1))
         )
-        return np.nonzero(is_close_enough)[0]
+        return np.column_stack(np.nonzero(is_close_enough))

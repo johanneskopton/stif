@@ -17,7 +17,9 @@ except ImportError:
 from ffist import Data
 from ffist.utils import get_distances
 from ffist.utils import histogram2d
-from ffist.utils import calc_kriging_weights
+from ffist.utils import calc_distance_matrix_1d
+from ffist.utils import calc_distance_matrix_2d
+from ffist.utils import nd_kriging
 from ffist.variogram_models import calc_weights
 from ffist.variogram_models import get_initial_parameters
 from ffist.variogram_models import variogram_model_dict
@@ -57,6 +59,7 @@ class Predictor:
         self._variogram_bins_space = None
         self._variogram_bins_time = None
         self._variogram_model_function = None
+        self._kriging_weights_function = None
 
         self._is_binary = self._data.predictand.dtype == bool
         self._is_keras_model = self._cov_model.__class__.__module__ ==\
@@ -207,6 +210,41 @@ class Predictor:
 
         return variogram_model
 
+    def _create_kriging_weights_function(self):
+        if self._variogram_model_function is None:
+            raise ValueError("Create variogram model function first.")
+
+        variogram_model_function = self._variogram_model_function
+
+        @nb.njit(fastmath=True)
+        def calc_kriging_weights(
+            kriging_vector,
+            coords_spatial,
+            coords_temporal,
+        ):
+            n = len(kriging_vector)
+            spatial_dist = calc_distance_matrix_2d(coords_spatial)
+            temporal_dist = calc_distance_matrix_1d(coords_temporal)
+            A_var = variogram_model_function(spatial_dist, temporal_dist)
+
+            # for Lagrange multiplier
+            A = np.ones((n+1, n+1), dtype=A_var.dtype)
+            A[:-1, :-1] = A_var
+            A[-1, -1] = 0
+
+            b = kriging_vector
+
+            # for Lagrange multiplier
+            b = np.append(b, 1)
+
+            w = np.linalg.lstsq(A, b)[0]
+
+            # remove Lagrange multiplier
+            w = w[:-1]
+
+            return w
+        return calc_kriging_weights
+
     def fit_variogram_model(
         self,
         st_model="sum_metric",
@@ -277,6 +315,8 @@ class Predictor:
         ]
         self._variogram_model_function = \
             self._create_variogram_model_function()
+        self._kriging_weights_function = \
+            self._create_kriging_weights_function()
 
     def get_variogram_model_grid(self):
         if self._variogram_fit is None:
@@ -303,32 +343,14 @@ class Predictor:
             space_dist_max,
             time_dist_max,
         )
-        if len(kriging_idxs) < min_kriging_points:
-            return np.nan, np.nan
-        h = np.sqrt(
-            np.sum(
-                np.square(
-                    self._data.space_coords[kriging_idxs, :] -
-                    space,
-                ), axis=1,
-            ),
-        )
-        t = np.abs(self._data.time_coords[kriging_idxs] - time)
-        kriging_vector = self._variogram_model_function(h, t)
-        if len(kriging_idxs) > max_kriging_points:
-            lowest_idxs = np.argsort(kriging_vector)[:max_kriging_points]
-            kriging_idxs = kriging_idxs[lowest_idxs]
-            kriging_vector = kriging_vector[lowest_idxs]
-
-        space_coords = self._data.space_coords[kriging_idxs, :]
-        time_coords = self._data.time_coords[kriging_idxs]
-        kriging_weights = calc_kriging_weights(
+        return nd_kriging(
+            space, time,
+            kriging_idxs,
+            min_kriging_points, max_kriging_points,
+            self._data.space_coords, self._data.time_coords,
             self._variogram_model_function,
-            kriging_vector,
-            space_coords,
-            time_coords,
+            self._kriging_weights_function,
         )
-        return kriging_weights, kriging_idxs
 
     def get_kriging_prediction(
         self,
@@ -337,12 +359,12 @@ class Predictor:
         min_kriging_points=10,
         max_kriging_points=100,
     ):
-        w, kriging_idxs = self.get_kriging_weights(
+        w, kriging_idx_matrix = self.get_kriging_weights(
             space, time,
             min_kriging_points,
             max_kriging_points,
         )
-        return np.sum(w * self._residuals[kriging_idxs])
+        return np.sum(w * self._residuals[kriging_idx_matrix], axis=1)
 
     def plot_kriging_weights(
         self,
@@ -352,11 +374,13 @@ class Predictor:
         max_kriging_points=100,
         target="screen",
     ):
-        w, kriging_idxs = self.get_kriging_weights(
-            space, time,
+        w, kriging_idx_matrix = self.get_kriging_weights(
+            np.array([space]), np.array([time]),
             min_kriging_points,
             max_kriging_points,
         )
+        w = w[0, :]
+        kriging_idxs = kriging_idx_matrix[0, :]
 
         space_coords = self._data.space_coords[kriging_idxs, :]
         time_coords = self._data.time_coords[kriging_idxs]

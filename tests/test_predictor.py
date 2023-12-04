@@ -4,6 +4,7 @@ import tempfile
 
 import numpy as np
 import pandas as pd
+import pytest
 import sklearn.metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression
@@ -199,3 +200,39 @@ def test_fit_variogram_model():
     )
 
     assert np.isclose(5.36, predictor._variogram_fit.fun, rtol=0.2)
+
+
+@pytest.mark.filterwarnings("ignore::RuntimeWarning:matplotlib")
+def test_kriging():
+    data = Data(
+        df,
+        space_cols=["x", "y"],
+        time_col="time",
+        predictand_col="PM10",
+        covariate_cols=["x", "y", "time"],
+    )
+
+    covariate_model = LinearRegression()
+    predictor = Predictor(data, covariate_model)
+    predictor.fit_covariate_model()
+
+    predictor.calc_empirical_variogram(
+        space_dist_max=6e5,
+        time_dist_max=7,
+        n_time_bins=7,
+        el_max=1e8,
+    )
+
+    predictor.fit_variogram_model()
+    sample_pos = df.iloc[21000]
+    predictor.plot_kriging_weights(
+        [sample_pos.x, sample_pos.y],
+        sample_pos.time,
+        max_kriging_points=50,
+        target=tempfile.NamedTemporaryFile(delete=True),
+    )
+    kriging_res = predictor.get_kriging_prediction(
+        [sample_pos.x, sample_pos.y],
+        sample_pos.time,
+    )
+    assert np.isclose(kriging_res, 0.888, rtol=0.1)

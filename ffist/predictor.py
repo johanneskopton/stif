@@ -17,6 +17,7 @@ except ImportError:
 from ffist import Data
 from ffist.utils import get_distances
 from ffist.utils import histogram2d
+from ffist.utils import calc_kriging_weights
 from ffist.variogram_models import calc_weights
 from ffist.variogram_models import get_initial_parameters
 from ffist.variogram_models import variogram_model_dict
@@ -61,8 +62,11 @@ class Predictor:
         self._is_keras_model = self._cov_model.__class__.__module__ ==\
             "keras.src.engine.sequential"
 
+        self._residuals = None
+
     def fit_covariate_model(self, train_idxs=slice(None)):
         self._cov_model.fit(self._X[train_idxs, :], self._y[train_idxs])
+        self._residuals = self.get_residuals()
 
     def save_covariate_model(self, filename):
         if self._is_keras_model:
@@ -132,9 +136,9 @@ class Predictor:
         n_time_bins=10,
         el_max=1e6,
     ):
-        residuals = self.get_residuals(idxs)
         space_coords = self._data.space_coords[idxs, :]
         time_coords = self._data.time_coords[idxs]
+        residuals = self._residuals[idxs]
 
         space_lags, time_lags, sq_val_delta = get_distances(
             space_coords,
@@ -284,6 +288,94 @@ class Predictor:
             indexing="ij",
         )
         return self._variogram_model_function(h, t)
+
+    def get_kriging_weights(
+        self,
+        space,
+        time,
+        min_kriging_points=10,
+        max_kriging_points=100,
+    ):
+        space_dist_max = self._variogram_bins_space[-1]
+        time_dist_max = self._variogram_bins_time[-1]
+        kriging_idxs = self._data.get_kriging_idxs(
+            space, time,
+            space_dist_max,
+            time_dist_max,
+        )
+        if len(kriging_idxs) < min_kriging_points:
+            return np.nan, np.nan
+        h = np.sqrt(
+            np.sum(
+                np.square(
+                    self._data.space_coords[kriging_idxs, :] -
+                    space,
+                ), axis=1,
+            ),
+        )
+        t = np.abs(self._data.time_coords[kriging_idxs] - time)
+        kriging_vector = self._variogram_model_function(h, t)
+        if len(kriging_idxs) > max_kriging_points:
+            lowest_idxs = np.argsort(kriging_vector)[:max_kriging_points]
+            kriging_idxs = kriging_idxs[lowest_idxs]
+            kriging_vector = kriging_vector[lowest_idxs]
+
+        space_coords = self._data.space_coords[kriging_idxs, :]
+        time_coords = self._data.time_coords[kriging_idxs]
+        kriging_weights = calc_kriging_weights(
+            self._variogram_model_function,
+            kriging_vector,
+            space_coords,
+            time_coords,
+        )
+        return kriging_weights, kriging_idxs
+
+    def get_kriging_prediction(
+        self,
+        space,
+        time,
+        min_kriging_points=10,
+        max_kriging_points=100,
+    ):
+        w, kriging_idxs = self.get_kriging_weights(
+            space, time,
+            min_kriging_points,
+            max_kriging_points,
+        )
+        return np.sum(w * self._residuals[kriging_idxs])
+
+    def plot_kriging_weights(
+        self,
+        space,
+        time,
+        min_kriging_points=10,
+        max_kriging_points=100,
+        target="screen",
+    ):
+        w, kriging_idxs = self.get_kriging_weights(
+            space, time,
+            min_kriging_points,
+            max_kriging_points,
+        )
+
+        space_coords = self._data.space_coords[kriging_idxs, :]
+        time_coords = self._data.time_coords[kriging_idxs]
+
+        fig = plt.figure()
+        ax = fig.add_subplot(projection='3d')
+
+        ax.scatter(
+            space_coords[:, 0],
+            space_coords[:, 1], time_coords, s=w*100,
+        )
+        ax.scatter([space[0]], [space[1]], [time])
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Time")
+        if target == "screen":
+            plt.show()
+        else:
+            fig.savefig(target)
 
     def plot_cross_validation_roc(self, target="screen"):
         if self._cross_val_res is None:

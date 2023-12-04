@@ -105,3 +105,21 @@ class Data:
 
     def get_training_covariates(self):
         return self.prepare_covariates(self._training_df)
+
+    def get_kriging_idxs(
+            self,
+            space,
+            time,
+            space_dist_max,
+            time_dist_max,
+    ):
+        """Get the indices of the training data that are within the
+        specified spatial and temporal distance."""
+        space_dist_sq = np.sum((self.space_coords - space)**2, axis=1)
+        time_dist = np.abs(self.time_coords - time)
+        is_close_enough = (
+            (space_dist_sq < space_dist_max**2) &
+            (time_dist < time_dist_max) &
+            (self.time_coords < time)
+        )
+        return np.nonzero(is_close_enough)[0]

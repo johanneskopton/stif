@@ -3,6 +3,27 @@ import numpy as np
 
 
 @nb.njit(fastmath=True)
+def calc_distance_matrix_1d(vec):
+    res = np.empty((len(vec), len(vec)), dtype=vec.dtype)
+    for i in range(len(vec)):
+        for j in range(len(vec)):
+            res[i, j] = np.abs(vec[i]-vec[j])
+    return res
+
+
+@nb.njit(fastmath=True)
+def calc_distance_matrix_2d(vec):
+    res = np.empty((vec.shape[0], vec.shape[0]), dtype=vec.dtype)
+    for i in range(vec.shape[0]):
+        for j in range(vec.shape[0]):
+            res[i, j] = np.sqrt(
+                (vec[i, 0]-vec[j, 0])**2 +
+                (vec[i, 1]-vec[j, 1])**2,
+            )
+    return res
+
+
+@nb.njit(fastmath=True)
 def get_distances(space, time, val, space_max, time_max, el_max):
     # shuffle data, so that we get a random sample, it el_max is too small
     # to fit all relevant elements
@@ -66,3 +87,32 @@ def histogram2d(
             norm[bin_x, bin_y] += 1
 
     return hist, norm, bin_width_x, bin_width_y
+
+
+def calc_kriging_weights(
+    variogram_model_function,
+    kriging_vector,
+    coords_spatial,
+    coords_temporal,
+):
+    n = len(kriging_vector)
+    spatial_dist = calc_distance_matrix_2d(coords_spatial)
+    temporal_dist = calc_distance_matrix_1d(coords_temporal)
+    A = variogram_model_function(spatial_dist, temporal_dist)
+
+    # for Lagrange multiplier
+    A = np.c_[A, np.ones(n)]
+    A = np.r_[A, [np.ones(n+1)]]
+    A[-1, -1] = 0
+
+    b = kriging_vector
+
+    # for Lagrange multiplier
+    b = np.append(b, 1)
+
+    w = np.linalg.lstsq(A, b, rcond=None)[0]
+
+    # remove Lagrange multiplier
+    w = w[:-1]
+
+    return w

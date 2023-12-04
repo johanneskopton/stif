@@ -2,7 +2,7 @@ import numba as nb
 import numpy as np
 
 
-@nb.njit(fastmath=True, parallel=True)
+@nb.njit(fastmath=True)
 def get_distances(space, time, val, space_max, time_max, el_max):
     # shuffle data, so that we get a random sample, it el_max is too small
     # to fit all relevant elements
@@ -18,7 +18,7 @@ def get_distances(space, time, val, space_max, time_max, el_max):
     time_lags = np.empty(el_max, dtype=time.dtype)
     sq_val_deltas = np.empty(el_max, dtype=val.dtype)
     ii = 0
-    for i in nb.prange(len(val)):
+    for i in range(len(val)):
         for j in range(i+1, len(val)):
             space_lag = np.sqrt(
                 np.square(space[i, 0]-space[j, 0]) +
@@ -43,7 +43,7 @@ def get_distances(space, time, val, space_max, time_max, el_max):
     return space_lags[:ii], time_lags[:ii], sq_val_deltas[:ii]
 
 
-@nb.njit(fastmath=True, parallel=True)
+@nb.njit(fastmath=True)
 def histogram2d(
     x_coords, y_coords, num_bins_x, num_bins_y, x_range, y_range,
     values,
@@ -53,7 +53,7 @@ def histogram2d(
     hist = np.zeros((num_bins_x, num_bins_y), dtype=np.float64)
     norm = np.zeros((num_bins_x, num_bins_y), dtype=np.float64)
 
-    for i in nb.prange(len(x_coords)):
+    for i in range(len(x_coords)):
         x = x_coords[i]
         y = y_coords[i]
         value = values[i]

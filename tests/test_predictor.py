@@ -1,3 +1,4 @@
+import copy
 import math
 import os
 import tempfile
@@ -172,6 +173,37 @@ def test_empirical_variogram():
 
     assert np.isclose(predictor._variogram.min(), 27.8, rtol=0.1)
     assert np.isclose(predictor._variogram.max(), 136.0, rtol=0.1)
+
+
+def test_save_empirical_variogram():
+    data = Data(
+        df,
+        space_cols=["x", "y"],
+        time_col="time",
+        predictand_col="PM10",
+        covariate_cols=["x", "y", "time"],
+    )
+
+    covariate_model = LinearRegression()
+    predictor1 = Predictor(data, covariate_model)
+    predictor1.fit_covariate_model()
+
+    predictor2 = copy.deepcopy(predictor1)
+
+    predictor1.calc_empirical_variogram(
+        space_dist_max=6e5,
+        time_dist_max=10,
+        el_max=1e8,
+    )
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".npz") as temp_file:
+        temp_filename = temp_file.name
+        predictor1.save_empirical_variogram(temp_filename)
+        predictor2.load_empirical_variogram(temp_filename)
+
+    variogram1 = predictor1._variogram
+    variogram2 = predictor2._variogram
+
+    assert np.allclose(variogram1, variogram2, rtol=0.1)
 
 
 def test_fit_variogram_model():

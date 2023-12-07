@@ -188,6 +188,24 @@ class Predictor:
         self._variogram_bins_time = bins_time
         self._variogram_samples_per_bin = samples_per_bin
 
+    def save_empirical_variogram(self, filename):
+        if self._variogram is None:
+            raise ValueError("Calc empirical variogoram first.")
+        np.savez(
+            filename,
+            variogram=self._variogram,
+            bins_space=self._variogram_bins_space,
+            bins_time=self._variogram_bins_time,
+            samples_per_bin=self._variogram_samples_per_bin,
+        )
+
+    def load_empirical_variogram(self, filename):
+        with np.load(filename) as data:
+            self._variogram = data["variogram"]
+            self._variogram_bins_space = data["bins_space"]
+            self._variogram_bins_time = data["bins_time"]
+            self._variogram_samples_per_bin = data["samples_per_bin"]
+
     def _create_variogram_model_function(self):
         if self._variogram_fit is None:
             raise ValueError("Fit variogram model first.")

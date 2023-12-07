@@ -19,7 +19,6 @@ from ffist.utils import get_distances
 from ffist.utils import histogram2d
 from ffist.utils import calc_distance_matrix_1d
 from ffist.utils import calc_distance_matrix_2d
-from ffist.utils import nd_kriging
 from ffist.variogram_models import calc_weights
 from ffist.variogram_models import get_initial_parameters
 from ffist.variogram_models import variogram_model_dict
@@ -60,6 +59,7 @@ class Predictor:
         self._variogram_bins_time = None
         self._variogram_model_function = None
         self._kriging_weights_function = None
+        self._kriging_function = None
 
         self._is_binary = self._data.predictand.dtype == bool
         self._is_keras_model = self._cov_model.__class__.__module__ ==\
@@ -245,6 +245,66 @@ class Predictor:
             return w
         return calc_kriging_weights
 
+    def _create_kriging_function(self):
+        if self._kriging_weights_function is None:
+            raise ValueError("Create Kriging weights function first.")
+
+        kriging_weights_function = self._kriging_weights_function
+        variogram_model_function = self._variogram_model_function
+
+        @nb.njit(fastmath=True, parallel=True)
+        def nd_kriging(
+            space, time,
+            kriging_idxs,
+            min_kriging_points, max_kriging_points,
+            space_coords, time_coords,
+        ):
+            n_targets = len(time)
+            kriging_weights = np.zeros(
+                (n_targets, max_kriging_points), dtype=np.float32,
+            )
+            kriging_idx_matrix = np.zeros(
+                (n_targets, max_kriging_points), dtype=np.uintc,
+            )
+            for target_i in nb.prange(n_targets):
+                kriging_idxs_target = kriging_idxs[
+                    kriging_idxs[:, 1]
+                    == target_i, 0,
+                ]
+                if len(kriging_idxs_target) < min_kriging_points:
+                    kriging_weights[target_i, :] = np.nan
+                h = np.sqrt(
+                    np.sum(
+                        np.square(
+                            space_coords[kriging_idxs_target, :] -
+                            space[target_i, :],
+                        ), axis=1,
+                    ),
+                )
+                t = np.abs(time_coords[kriging_idxs_target] - time[target_i])
+                kriging_vector = variogram_model_function(h, t)
+                if len(kriging_idxs_target) > max_kriging_points:
+                    lowest_idxs = np.argsort(kriging_vector)[
+                        :max_kriging_points
+                    ]
+                    kriging_idxs_target = kriging_idxs_target[lowest_idxs]
+                    kriging_vector = kriging_vector[lowest_idxs]
+
+                space_coords_local = space_coords[kriging_idxs_target, :]
+                time_coords_local = time_coords[kriging_idxs_target]
+                kriging_weights[
+                    target_i,
+                    :len(kriging_vector),
+                ] = kriging_weights_function(
+                    kriging_vector,
+                    space_coords_local,
+                    time_coords_local,
+                )
+                kriging_idx_matrix[target_i, :len(kriging_idxs_target)] =\
+                    kriging_idxs_target
+            return kriging_weights, kriging_idx_matrix
+        return nd_kriging
+
     def fit_variogram_model(
         self,
         st_model="sum_metric",
@@ -317,6 +377,8 @@ class Predictor:
             self._create_variogram_model_function()
         self._kriging_weights_function = \
             self._create_kriging_weights_function()
+        self._kriging_function = \
+            self._create_kriging_function()
 
     def get_variogram_model_grid(self):
         if self._variogram_fit is None:
@@ -343,13 +405,11 @@ class Predictor:
             space_dist_max,
             time_dist_max,
         )
-        return nd_kriging(
+        return self._kriging_function(
             space, time,
             kriging_idxs,
             min_kriging_points, max_kriging_points,
             self._data.space_coords, self._data.time_coords,
-            self._variogram_model_function,
-            self._kriging_weights_function,
         )
 
     def get_kriging_prediction(

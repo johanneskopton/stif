@@ -419,9 +419,13 @@ class Predictor:
         time,
         min_kriging_points=10,
         max_kriging_points=100,
+        space_dist_max=None,
+        time_dist_max=None,
     ):
-        space_dist_max = self._variogram_bins_space[-1]
-        time_dist_max = self._variogram_bins_time[-1]
+        if space_dist_max is None:
+            space_dist_max = self._variogram_bins_space[-1]
+        if time_dist_max is None:
+            time_dist_max = self._variogram_bins_time[-1]
         kriging_idxs = self._data.get_kriging_idxs(
             space, time,
             space_dist_max,
@@ -440,11 +444,15 @@ class Predictor:
         time,
         min_kriging_points=10,
         max_kriging_points=100,
+        space_dist_max=None,
+        time_dist_max=None,
     ):
         w, kriging_idx_matrix = self.get_kriging_weights(
             space, time,
             min_kriging_points,
             max_kriging_points,
+            space_dist_max,
+            time_dist_max,
         )
         return np.sum(w * self._residuals[kriging_idx_matrix], axis=1)
 

@@ -613,7 +613,7 @@ class Predictor:
             ax = fig.add_subplot(2, 3, i+2, projection='3d')
             self._plot_variogram(
                 grid, fig, ax,
-                title="{} (WMSE={:.3f})".format(model, wmse),
+                title="{} (WMSE={:.6f})".format(model, wmse),
             )
         fig.tight_layout()
         if target == "screen":

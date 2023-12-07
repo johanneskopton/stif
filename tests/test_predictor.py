@@ -265,7 +265,7 @@ def test_kriging():
         max_kriging_points=50,
         target=tempfile.NamedTemporaryFile(delete=True),
     )
-    kriging_res = predictor.get_kriging_prediction(
+    kriging_mean, kriging_std = predictor.get_kriging_prediction(
         space, time,
     )
-    assert np.isclose(kriging_res[0], 0.888, atol=2.0)
+    assert np.isclose(kriging_mean[0], 0.888, atol=2.0)

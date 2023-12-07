@@ -288,6 +288,9 @@ class Predictor:
             kriging_idx_matrix = np.zeros(
                 (n_targets, max_kriging_points), dtype=np.uintc,
             )
+            kriging_vectors = np.zeros(
+                (n_targets, max_kriging_points), dtype=np.float32,
+            )
             for target_i in nb.prange(n_targets):
                 kriging_idxs_target = kriging_idxs[
                     kriging_idxs[:, 1]
@@ -324,7 +327,10 @@ class Predictor:
                 )
                 kriging_idx_matrix[target_i, :len(kriging_idxs_target)] =\
                     kriging_idxs_target
-            return kriging_weights, kriging_idx_matrix
+
+                kriging_vectors[target_i, :len(kriging_vector)] =\
+                    kriging_vector
+            return kriging_weights, kriging_vectors, kriging_idx_matrix
         return nd_kriging
 
     def fit_variogram_model(
@@ -426,6 +432,7 @@ class Predictor:
             space_dist_max = self._variogram_bins_space[-1]
         if time_dist_max is None:
             time_dist_max = self._variogram_bins_time[-1]
+
         kriging_idxs = self._data.get_kriging_idxs(
             space, time,
             space_dist_max,
@@ -447,14 +454,26 @@ class Predictor:
         space_dist_max=None,
         time_dist_max=None,
     ):
-        w, kriging_idx_matrix = self.get_kriging_weights(
+        if space_dist_max is None:
+            space_dist_max = self._variogram_bins_space[-1]
+        if time_dist_max is None:
+            time_dist_max = self._variogram_bins_time[-1]
+
+        w, kriging_vectors, kriging_idx_matrix = self.get_kriging_weights(
             space, time,
             min_kriging_points,
             max_kriging_points,
             space_dist_max,
             time_dist_max,
         )
-        return np.sum(w * self._residuals[kriging_idx_matrix], axis=1)
+        kriging_mean = np.sum(
+            w * self._residuals[kriging_idx_matrix],
+            axis=1,
+        )
+
+        sill = self._variogram_model_function(space_dist_max, time_dist_max)
+        kriging_std = np.sqrt(sill - np.sum(w * kriging_vectors, axis=1))
+        return kriging_mean, kriging_std
 
     def plot_kriging_weights(
         self,
@@ -464,11 +483,12 @@ class Predictor:
         max_kriging_points=100,
         target="screen",
     ):
-        w, kriging_idx_matrix = self.get_kriging_weights(
-            np.array([space]), np.array([time]),
-            min_kriging_points,
-            max_kriging_points,
-        )
+        w, kriging_vectors, kriging_idx_matrix = \
+            self.get_kriging_weights(
+                np.array([space]), np.array([time]),
+                min_kriging_points,
+                max_kriging_points,
+            )
         w = w[0, :]
         kriging_idxs = kriging_idx_matrix[0, :]
 

@@ -67,9 +67,12 @@ class Predictor:
 
         self._residuals = None
 
+    def _prepare_geostatistics(self):
+        self._residuals = self.get_residuals()
+
     def fit_covariate_model(self, train_idxs=slice(None)):
         self._cov_model.fit(self._X[train_idxs, :], self._y[train_idxs])
-        self._residuals = self.get_residuals()
+        self._prepare_geostatistics()
 
     def save_covariate_model(self, filename):
         if self._is_keras_model:
@@ -89,6 +92,7 @@ class Predictor:
         else:
             with open(filename, 'rb') as file:
                 self._cov_model = pickle.load(file)
+        self._prepare_geostatistics()
 
     @property
     def _covariate_prediction_function(self):

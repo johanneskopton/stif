@@ -448,14 +448,17 @@ class Predictor:
         fig = plt.figure()
         ax = fig.add_subplot(projection='3d')
 
-        ax.scatter(
+        plot = ax.scatter(
             space_coords[:, 0],
             space_coords[:, 1], time_coords, s=w*100,
+            c=self._residuals[kriging_idxs],
+            cmap="viridis",
         )
-        ax.scatter([space[0]], [space[1]], [time])
+        ax.scatter([space[0]], [space[1]], [time], color="xkcd:red")
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
         ax.set_zlabel("Time")
+        fig.colorbar(plot)
         if target == "screen":
             plt.show()
         else:

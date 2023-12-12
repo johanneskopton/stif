@@ -471,8 +471,7 @@ class Predictor:
             axis=1,
         )
 
-        sill = self._variogram_model_function(space_dist_max, time_dist_max)
-        kriging_std = np.sqrt(sill - np.sum(w * kriging_vectors, axis=1))
+        kriging_std = np.sqrt(np.sum(w * kriging_vectors, axis=1))
         return kriging_mean, kriging_std
 
     def plot_kriging_weights(

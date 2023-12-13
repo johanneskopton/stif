@@ -33,6 +33,7 @@ def test_covariance_predictor_binary():
     for i, model in enumerate(models):
         covariate_model = model(random_state=0)
         predictor = Predictor(data, covariate_model)
+        predictor.calc_cross_validation()
         cv_aucs = predictor.get_cross_val_metric(sklearn.metrics.roc_auc_score)
         assert np.isclose(cv_aucs[-1], target_aucs[i], rtol=0.1)
 
@@ -73,6 +74,7 @@ def test_sinusodials():
         cv_splits=3,
         covariate_model=covariate_model,
     )
+    predictor.calc_cross_validation()
     cv_aucs = predictor.get_cross_val_metric(sklearn.metrics.roc_auc_score)
     assert np.allclose(cv_aucs, [1, 1, 1], rtol=0.02)
 
@@ -103,6 +105,8 @@ def test_covariance_predictor_transformation_binary():
         cv_splits=3,
         covariate_model=covariate_model,
     )
+
+    predictor.calc_cross_validation()
     cv_aucs = predictor.get_cross_val_metric(sklearn.metrics.roc_auc_score)
     predictor.plot_cross_validation_roc(
         target=tempfile.NamedTemporaryFile(delete=True),
@@ -269,3 +273,46 @@ def test_kriging():
         space, time,
     )
     assert np.isclose(kriging_mean[0], -0.888, atol=2.0)
+
+
+def test_kriging_cross_val():
+    data = Data(
+        df_binary,
+        space_cols=["x", "y"],
+        time_col="time",
+        covariate_cols=["time"],
+    )
+
+    covariate_model = LogisticRegression()
+    predictor = Predictor(data, covariate_model, cv_splits=3)
+
+    variogram_params = {
+        "space_dist_max": 6e5,
+        "time_dist_max": 7,
+        "n_time_bins": 7,
+        "el_max": 1e8,
+    }
+
+    kriging_params = {
+        "min_kriging_points": 1,
+        "max_kriging_points": 10,
+        "space_dist_max": 2e5,
+    }
+
+    predictor.calc_cross_validation()
+    predictor.plot_cross_validation_roc(
+        target=tempfile.NamedTemporaryFile(delete=True),
+    )
+    predictor.calc_cross_validation(
+        kriging=True,
+        geostat_params={
+            "variogram_params": variogram_params,
+            "kriging_params": kriging_params,
+        },
+    )
+    cv_aucs = predictor.get_cross_val_metric(sklearn.metrics.roc_auc_score)
+    predictor.plot_cross_validation_roc(
+        target=tempfile.NamedTemporaryFile(delete=True),
+    )
+    target_aucs = [0.71, 0.84, 0.83]
+    assert np.isclose(cv_aucs, target_aucs, rtol=0.1).all()

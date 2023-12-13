@@ -112,20 +112,38 @@ class Predictor:
     def get_residuals(self, idxs=slice(None)):
         return self._y[idxs] - self.get_covariate_probability(idxs)
 
-    def calc_cross_validation(self):
+    def calc_cross_validation(self, kriging=False, geostat_params=dict()):
         cv = sklearn.model_selection.TimeSeriesSplit(n_splits=self._cv_splits)
-        ground_truth = []
-        prediction = []
+        ground_truth_list = []
+        prediction_list = []
         for fold, (train, test) in enumerate(cv.split(self._X, self._y)):
             self.fit_covariate_model(train)
-            ground_truth.append(self._y[test])
-            prediction.append(self.get_covariate_probability(test))
+            ground_truth_list.append(self._y[test])
+            prediction = self.get_covariate_probability(test)
+            if kriging:
+                if "variogram_params" in geostat_params.keys():
+                    variogram_params = geostat_params["variogram_params"]
+                else:
+                    variogram_params = dict()
+                if "kriging_params" in geostat_params.keys():
+                    kriging_params = geostat_params["kriging_params"]
+                else:
+                    kriging_params = dict()
+                self.calc_empirical_variogram(train, **variogram_params)
+                self.fit_variogram_model()
+                kriging_mean, kriging_std = self.get_kriging_prediction(
+                    self._data.space_coords[test, :],
+                    self._data.time_coords[test],
+                    **kriging_params,
+                )
+                prediction += kriging_mean
 
-        self._cross_val_res = ground_truth, prediction
+            prediction_list.append(prediction)
+        self._cross_val_res = ground_truth_list, prediction_list
 
     def get_cross_val_metric(self, metric):
         if self._cross_val_res is None:
-            self.calc_cross_validation()
+            raise ValueError("Calc cross validation first.")
 
         ground_truth, prediction = self._cross_val_res
 
@@ -515,7 +533,7 @@ class Predictor:
 
     def plot_cross_validation_roc(self, target="screen"):
         if self._cross_val_res is None:
-            self.calc_cross_validation()
+            raise ValueError("Calc cross validation first.")
 
         tprs = []
         aucs = []

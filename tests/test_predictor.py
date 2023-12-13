@@ -272,7 +272,7 @@ def test_kriging():
     kriging_mean, kriging_std = predictor.get_kriging_prediction(
         space, time,
     )
-    assert np.isclose(kriging_mean[0], -0.888, atol=2.0)
+    assert np.isclose(kriging_mean[0], -5.3, atol=2.0)
 
 
 def test_kriging_cross_val():

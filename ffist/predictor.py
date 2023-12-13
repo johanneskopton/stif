@@ -110,7 +110,7 @@ class Predictor:
         return self._cov_model.predict(X)
 
     def get_residuals(self, idxs=slice(None)):
-        return self.get_covariate_probability(idxs) - self._y[idxs]
+        return self._y[idxs] - self.get_covariate_probability(idxs)
 
     def calc_cross_validation(self):
         cv = sklearn.model_selection.TimeSeriesSplit(n_splits=self._cv_splits)

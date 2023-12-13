@@ -239,7 +239,7 @@ def test_fit_variogram_model():
 
 
 @pytest.mark.filterwarnings("ignore::RuntimeWarning:matplotlib")
-def test_kriging():
+def test_kriging_prediction():
     data = Data(
         df,
         space_cols=["x", "y"],

@@ -693,3 +693,52 @@ class Predictor:
             plt.show()
         else:
             fig.savefig(target)
+
+    def plot_cross_validation_residuals(self, target="screen"):
+        if self._cross_val_res is None:
+            raise ValueError("Calc cross validation first.")
+
+        fig, ax = plt.subplots(figsize=(6, 6))
+
+        ground_truth, pred = self._cross_val_res
+
+        maximum = 0
+        minimum = np.infty
+        for fold in range(self._cv_splits):
+            maximum = max(
+                maximum,
+                np.max(pred[fold]),
+                np.max(ground_truth[fold]),
+            )
+            minimum = min(
+                minimum,
+                np.min(pred[fold]),
+                np.min(ground_truth[fold]),
+            )
+            r_squared = sklearn.metrics.r2_score(
+                ground_truth[fold], pred[fold],
+            )
+            ax.scatter(
+                ground_truth[fold],
+                pred[fold],
+                label=f"Fold {fold}: r2={r_squared:.3f}",
+            )
+
+        ax.plot(
+            [minimum, maximum],
+            [minimum, maximum],
+            color="k",
+        )
+
+        ax.set(
+            xlabel="Ground truth",
+            ylabel="Prediction",
+            title="Cross validation\n(TimeSeriesPrediction)",
+        )
+        ax.axis("square")
+        ax.legend(loc="lower right")
+
+        if target == "screen":
+            plt.show()
+        else:
+            fig.savefig(target)

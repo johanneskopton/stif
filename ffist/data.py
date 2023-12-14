@@ -113,6 +113,7 @@ class Data:
             time,
             space_dist_max,
             time_dist_max,
+            leave_out_idxs,
     ):
         """Get the indices of the training data that are within the
         specified spatial and temporal distance."""
@@ -125,9 +126,13 @@ class Data:
         time_dist = scipy.spatial.distance.cdist(
             self.time_coords.reshape(-1, 1), time.reshape(-1, 1),
         )
+        index_mask = np.ones([len(self.time_coords), len(time)], dtype=bool)
+        if leave_out_idxs is not None:
+            index_mask[leave_out_idxs, np.arange(len(time))] = False
         is_close_enough = (
             (space_dist_sq < space_dist_max**2) &
             (time_dist < time_dist_max) &
-            (self.time_coords.reshape(-1, 1) < time.reshape(1, -1))
+            (self.time_coords.reshape(-1, 1) <= time.reshape(1, -1)) &
+            index_mask
         )
         return np.column_stack(np.nonzero(is_close_enough))

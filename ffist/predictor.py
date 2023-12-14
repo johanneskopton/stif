@@ -134,6 +134,7 @@ class Predictor:
                 kriging_mean, kriging_std = self.get_kriging_prediction(
                     self._data.space_coords[test, :],
                     self._data.time_coords[test],
+                    leave_out_idxs=test,
                     **kriging_params,
                 )
                 prediction += kriging_mean
@@ -446,6 +447,7 @@ class Predictor:
         max_kriging_points=100,
         space_dist_max=None,
         time_dist_max=None,
+        leave_out_idxs=None,
     ):
         if space_dist_max is None:
             space_dist_max = self._variogram_bins_space[-1]
@@ -456,6 +458,7 @@ class Predictor:
             space, time,
             space_dist_max,
             time_dist_max,
+            leave_out_idxs,
         )
         return self._kriging_function(
             space, time,
@@ -472,6 +475,7 @@ class Predictor:
         max_kriging_points=10,
         space_dist_max=None,
         time_dist_max=None,
+        leave_out_idxs=None,
     ):
         if space_dist_max is None:
             space_dist_max = self._variogram_bins_space[-1] / 2
@@ -484,6 +488,7 @@ class Predictor:
             max_kriging_points,
             space_dist_max,
             time_dist_max,
+            leave_out_idxs,
         )
         kriging_mean = np.sum(
             w * self._residuals[kriging_idx_matrix],

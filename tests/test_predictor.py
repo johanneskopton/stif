@@ -314,5 +314,5 @@ def test_kriging_cross_val():
     predictor.plot_cross_validation_roc(
         target=tempfile.NamedTemporaryFile(delete=True),
     )
-    target_aucs = [0.71, 0.84, 0.83]
+    target_aucs = [0.87, 0.90, 0.90]
     assert np.isclose(cv_aucs, target_aucs, rtol=0.1).all()

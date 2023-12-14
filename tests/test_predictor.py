@@ -38,6 +38,31 @@ def test_covariance_predictor_binary():
         assert np.isclose(cv_aucs[-1], target_aucs[i], rtol=0.1)
 
 
+def test_covariance_regression_crossval():
+    data = Data(
+        df,
+        space_cols=["x", "y"],
+        time_col="time",
+        predictand_col="PM10",
+        covariate_cols=["x", "y", "time"],
+    )
+
+    covariate_model = LinearRegression()
+    predictor = Predictor(data, covariate_model)
+    predictor.calc_cross_validation()
+    predictor.plot_cross_validation_residuals(
+        target=tempfile.NamedTemporaryFile(delete=True),
+    )
+    score = predictor.get_cross_val_metric(
+        sklearn.metrics.explained_variance_score,
+    )
+    target_scores = [
+        -0.14, -0.07,
+        0.00, 0.01, 0.05,
+    ]
+    assert np.isclose(score, target_scores, atol=0.1).all()
+
+
 def test_sinusodials():
     n = 10000
     time = np.random.uniform(0, 1000, n)
@@ -275,7 +300,7 @@ def test_kriging_prediction():
     assert np.isclose(kriging_mean[0], -5.3, atol=2.0)
 
 
-def test_kriging_cross_val():
+def test_kriging_binary_cross_val():
     data = Data(
         df_binary,
         space_cols=["x", "y"],
@@ -316,3 +341,50 @@ def test_kriging_cross_val():
     )
     target_aucs = [0.87, 0.90, 0.90]
     assert np.isclose(cv_aucs, target_aucs, rtol=0.1).all()
+
+
+def test_kriging_regression_cross_val():
+    data = Data(
+        df,
+        space_cols=["x", "y"],
+        time_col="time",
+        predictand_col="PM10",
+        covariate_cols=["time"],
+    )
+
+    covariate_model = LinearRegression()
+    predictor = Predictor(data, covariate_model, cv_splits=3)
+
+    variogram_params = {
+        "space_dist_max": 6e5,
+        "time_dist_max": 7,
+        "n_time_bins": 7,
+        "el_max": 1e8,
+    }
+
+    kriging_params = {
+        "min_kriging_points": 1,
+        "max_kriging_points": 10,
+        "space_dist_max": 2e5,
+    }
+
+    predictor.calc_cross_validation()
+    predictor.plot_cross_validation_residuals(
+        target=tempfile.NamedTemporaryFile(delete=True),
+    )
+
+    predictor.calc_cross_validation(
+        kriging=True,
+        geostat_params={
+            "variogram_params": variogram_params,
+            "kriging_params": kriging_params,
+        },
+    )
+    scores = predictor.get_cross_val_metric(
+        sklearn.metrics.explained_variance_score,
+    )
+    predictor.plot_cross_validation_residuals(
+        target=tempfile.NamedTemporaryFile(delete=True),
+    )
+    target_scores = [0.64, 0.59, 0.72]
+    assert np.isclose(scores, target_scores, rtol=0.1).all()

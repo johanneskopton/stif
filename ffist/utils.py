@@ -87,3 +87,17 @@ def histogram2d(
             norm[bin_x, bin_y] += 1
 
     return hist, norm, bin_width_x, bin_width_y
+
+
+# @nb.njit(parallel=True)
+# def leave_one_out_kriging_idxs(leave_out_idxs, kriging_idxs):
+#     for i in range(len(leave_out_idxs)):
+#         kriging_idxs = kriging_idxs[
+#             np.logical_not(
+#                 np.logical_and(
+#                     kriging_idxs[:, 0] == leave_out_idxs[i],
+#                     kriging_idxs[:, 1] == i,
+#                 ),
+#             ),
+#         ]
+#     return kriging_idxs

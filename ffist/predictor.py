@@ -488,6 +488,10 @@ class Predictor:
         kriging_std = np.zeros(n_targets)
         for i in range(0, n_targets, batch_size):
             batch_slice = slice(i, min(n_targets, i+batch_size))
+            if leave_out_idxs is None:
+                leave_out_idxs_batch = None
+            else:
+                leave_out_idxs_batch = leave_out_idxs[batch_slice]
             kriging_mean[batch_slice], kriging_std[batch_slice] = \
                 self._get_kriging_prediction_batch(
                     space[batch_slice, :],
@@ -496,7 +500,7 @@ class Predictor:
                     max_kriging_points,
                     space_dist_max,
                     time_dist_max,
-                    leave_out_idxs[batch_slice],
+                    leave_out_idxs_batch,
             )
         return kriging_mean, kriging_std
 

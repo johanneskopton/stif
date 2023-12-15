@@ -103,7 +103,7 @@ class Predictor:
         return res
 
     def get_covariate_probability(self, idxs=slice(None)):
-        return self._covariate_prediction_function(self._X[idxs])
+        return self._covariate_prediction_function(self._X[idxs]).flatten()
 
     def predict_covariate_probability(self, df):
         X = self._data.prepare_covariates(df)

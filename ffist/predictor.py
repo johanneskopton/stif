@@ -476,12 +476,40 @@ class Predictor:
         space_dist_max=None,
         time_dist_max=None,
         leave_out_idxs=None,
+        batch_size=1000,
     ):
+        n_targets = len(time)
         if space_dist_max is None:
             space_dist_max = self._variogram_bins_space[-1] / 2
         if time_dist_max is None:
             time_dist_max = self._variogram_bins_time[-1] / 2
 
+        kriging_mean = np.zeros(n_targets)
+        kriging_std = np.zeros(n_targets)
+        for i in range(0, n_targets, batch_size):
+            batch_slice = slice(i, min(n_targets, i+batch_size))
+            kriging_mean[batch_slice], kriging_std[batch_slice] = \
+                self._get_kriging_prediction_batch(
+                    space[batch_slice, :],
+                    time[batch_slice],
+                    min_kriging_points,
+                    max_kriging_points,
+                    space_dist_max,
+                    time_dist_max,
+                    leave_out_idxs[batch_slice],
+            )
+        return kriging_mean, kriging_std
+
+    def _get_kriging_prediction_batch(
+        self,
+        space,
+        time,
+        min_kriging_points,
+        max_kriging_points,
+        space_dist_max,
+        time_dist_max,
+        leave_out_idxs,
+    ):
         w, kriging_vectors, kriging_idx_matrix = self.get_kriging_weights(
             space, time,
             min_kriging_points,

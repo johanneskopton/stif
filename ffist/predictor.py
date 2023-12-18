@@ -45,9 +45,11 @@ class Predictor:
         data: Data,
         covariate_model: model_types = None,
         cv_splits: int = 5,
+        resampling=None,
     ):
         self._data = data
         self._cv_splits = cv_splits
+        self._resampling = resampling
 
         self._cov_model = covariate_model
         self._X = self._data.get_training_covariates()
@@ -71,7 +73,14 @@ class Predictor:
         self._residuals = self.get_residuals()
 
     def fit_covariate_model(self, train_idxs=slice(None)):
-        self._cov_model.fit(self._X[train_idxs, :], self._y[train_idxs])
+        training_X = self._X[train_idxs, :]
+        training_y = self._y[train_idxs]
+        if self._resampling is not None:
+            training_X, training_y = self._resampling.fit_resample(
+                training_X, training_y,
+            )
+
+        self._cov_model.fit(training_X, training_y)
         self._prepare_geostatistics()
 
     def save_covariate_model(self, filename):

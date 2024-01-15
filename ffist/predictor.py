@@ -169,7 +169,7 @@ class Predictor:
         time_dist_max=10,
         n_space_bins=10,
         n_time_bins=10,
-        el_max=1e6,
+        el_max=None,
     ):
         space_coords = self._data.space_coords[idxs, :]
         time_coords = self._data.time_coords[idxs]

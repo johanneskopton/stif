@@ -25,41 +25,62 @@ def calc_distance_matrix_2d(vec):
 
 @nb.njit(fastmath=True)
 def get_distances(space, time, val, space_max, time_max, el_max):
-    # shuffle data, so that we get a random sample, it el_max is too small
-    # to fit all relevant elements
-    shuffle_idxs = np.arange(len(val))
-    np.random.shuffle(shuffle_idxs)
+    if el_max is None:
+        nn = len(val)*(len(val)-1)//2
+    else:
+        nn = int(el_max)
 
-    space = space[shuffle_idxs, :]
-    time = time[shuffle_idxs]
-    val = val[shuffle_idxs]
+    n = len(val)
 
-    el_max = int(el_max)
-    space_lags = np.empty(el_max, dtype=space.dtype)
-    time_lags = np.empty(el_max, dtype=time.dtype)
-    sq_val_deltas = np.empty(el_max, dtype=val.dtype)
+    space_lags = np.empty(nn, dtype=space.dtype)
+    time_lags = np.empty(nn, dtype=time.dtype)
+    sq_val_deltas = np.empty(nn, dtype=val.dtype)
+
+    def get_lags(i, j):
+        space_lag = np.sqrt(
+            np.square(space[i, 0]-space[j, 0]) +
+            np.square(space[i, 1]-space[j, 1]),
+        )
+        if space_lag > space_max:
+            return None, None, None
+        time_lag = np.abs(time[i]-time[j])
+        if time_lag > time_max:
+            return None, None, None
+        sq_val_delta = np.square(val[i]-val[j])
+        return space_lag, time_lag, sq_val_delta
+
     ii = 0
-    for i in range(len(val)):
-        for j in range(i+1, len(val)):
-            space_lag = np.sqrt(
-                np.square(space[i, 0]-space[j, 0]) +
-                np.square(space[i, 1]-space[j, 1]),
-            )
-            if space_lag > space_max:
+    if el_max is None:
+        for i in range(n):
+            for j in range(i+1, n):
+                space_lag, time_lag, sq_val_delta = get_lags(i, j)
+
+                if space_lag is None:
+                    continue
+
+                space_lags[ii] = space_lag
+                time_lags[ii] = time_lag
+                sq_val_deltas[ii] = sq_val_delta
+
+                ii += 1
+    else:
+        for _ in range(el_max):
+            i = np.random.randint(len(val))
+            j = np.random.randint(len(val))
+
+            if i == j:
                 continue
-            time_lag = np.abs(time[i]-time[j])
-            if time_lag > time_max:
+
+            space_lag, time_lag, sq_val_delta = get_lags(i, j)
+
+            if space_lag is None:
                 continue
-            sq_val_delta = np.square(val[i]-val[j])
 
             space_lags[ii] = space_lag
             time_lags[ii] = time_lag
             sq_val_deltas[ii] = sq_val_delta
 
             ii += 1
-            if ii >= el_max:
-                print("not all relevant elements fit in matrix")
-                return space_lags, time_lags, sq_val_deltas
 
     return space_lags[:ii], time_lags[:ii], sq_val_deltas[:ii]
 

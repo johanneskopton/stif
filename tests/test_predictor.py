@@ -181,7 +181,7 @@ def test_save_covariate_model_sklearn():
     assert np.allclose(residuals1, residuals2, rtol=0.1)
 
 
-def test_empirical_variogram():
+def test_empirical_variogram_samples():
     data = Data(
         df,
         space_cols=["x", "y"],
@@ -197,7 +197,29 @@ def test_empirical_variogram():
     predictor.calc_empirical_variogram(
         space_dist_max=6e5,
         time_dist_max=10,
-        el_max=1e8,
+        el_max=2e8,
+    )
+
+    assert np.isclose(predictor._variogram.min(), 27.8, rtol=0.2)
+    assert np.isclose(predictor._variogram.max(), 136.0, rtol=0.2)
+
+
+def test_empirical_variogram_all():
+    data = Data(
+        df,
+        space_cols=["x", "y"],
+        time_col="time",
+        predictand_col="PM10",
+        covariate_cols=["x", "y", "time"],
+    )
+
+    covariate_model = LinearRegression()
+    predictor = Predictor(data, covariate_model)
+    predictor.fit_covariate_model()
+    predictor.calc_empirical_variogram(
+        space_dist_max=6e5,
+        time_dist_max=10,
+        el_max=None,
     )
 
     assert np.isclose(predictor._variogram.min(), 27.8, rtol=0.1)
@@ -252,7 +274,7 @@ def test_fit_variogram_model():
         space_dist_max=6e5,
         time_dist_max=7,
         n_time_bins=7,
-        el_max=1e8,
+        el_max=None,
     )
 
     predictor.fit_variogram_model()

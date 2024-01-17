@@ -50,7 +50,6 @@ def get_variogram(
     n_space_bins,
     n_time_bins,
     n_samples,
-
 ):
     n = len(val)
 

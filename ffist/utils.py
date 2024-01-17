@@ -24,87 +24,75 @@ def calc_distance_matrix_2d(vec):
 
 
 @nb.njit(fastmath=True)
-def get_distances(space, time, val, space_max, time_max, el_max):
-    if el_max is None:
-        nn = len(val)*(len(val)-1)//2
-    else:
-        nn = int(el_max)
-
-    n = len(val)
-
-    space_lags = np.empty(nn, dtype=space.dtype)
-    time_lags = np.empty(nn, dtype=time.dtype)
-    sq_val_deltas = np.empty(nn, dtype=val.dtype)
-
-    def get_lags(i, j):
-        space_lag = np.sqrt(
-            np.square(space[i, 0]-space[j, 0]) +
-            np.square(space[i, 1]-space[j, 1]),
-        )
-        if space_lag > space_max:
-            return None, None, None
-        time_lag = np.abs(time[i]-time[j])
-        if time_lag > time_max:
-            return None, None, None
-        sq_val_delta = np.square(val[i]-val[j])
-        return space_lag, time_lag, sq_val_delta
-
-    ii = 0
-    if el_max is None:
+def pair_index_generator(n, n_samples=None):
+    if n_samples is None:
         for i in range(n):
             for j in range(i+1, n):
-                space_lag, time_lag, sq_val_delta = get_lags(i, j)
-
-                if space_lag is None:
-                    continue
-
-                space_lags[ii] = space_lag
-                time_lags[ii] = time_lag
-                sq_val_deltas[ii] = sq_val_delta
-
-                ii += 1
+                yield i, j
     else:
-        for _ in range(el_max):
-            i = np.random.randint(len(val))
-            j = np.random.randint(len(val))
+        for _ in range(n_samples):
+            i = np.random.randint(n)
+            j = np.random.randint(n)
 
             if i == j:
                 continue
 
-            space_lag, time_lag, sq_val_delta = get_lags(i, j)
-
-            if space_lag is None:
-                continue
-
-            space_lags[ii] = space_lag
-            time_lags[ii] = time_lag
-            sq_val_deltas[ii] = sq_val_delta
-
-            ii += 1
-
-    return space_lags[:ii], time_lags[:ii], sq_val_deltas[:ii]
+            yield i, j
 
 
 @nb.njit(fastmath=True)
-def histogram2d(
-    x_coords, y_coords, num_bins_x, num_bins_y, x_range, y_range,
-    values,
+def get_variogram(
+    space,
+    time,
+    val,
+    space_dist_max,
+    time_dist_max,
+    n_space_bins,
+    n_time_bins,
+    n_samples,
+
 ):
-    bin_width_x = (x_range[1] - x_range[0]) / num_bins_x
-    bin_width_y = (y_range[1] - y_range[0]) / num_bins_y
-    hist = np.zeros((num_bins_x, num_bins_y), dtype=np.float64)
-    norm = np.zeros((num_bins_x, num_bins_y), dtype=np.float64)
+    n = len(val)
 
-    for i in range(len(x_coords)):
-        x = x_coords[i]
-        y = y_coords[i]
-        value = values[i]
+    # prepare histogram
+    space_bin_width = space_dist_max / n_space_bins
+    time_bin_width = time_dist_max / n_time_bins
+    hist = np.zeros((n_space_bins, n_time_bins), dtype=np.float64)
+    norm = np.zeros((n_space_bins, n_time_bins), dtype=np.float64)
 
-        bin_x = int((x - x_range[0]) / bin_width_x)
-        bin_y = int((y - y_range[0]) / bin_width_y)
+    for i, j in pair_index_generator(n, n_samples):
+        space_lag = np.sqrt(
+            np.square(space[i, 0]-space[j, 0]) +
+            np.square(space[i, 1]-space[j, 1]),
+        )
+        if space_lag > space_dist_max:
+            continue
+        time_lag = np.abs(time[i]-time[j])
+        if time_lag > time_dist_max:
+            continue
+        sq_val_delta = np.square(val[i]-val[j])
 
-        if 0 <= bin_x < num_bins_x and 0 <= bin_y < num_bins_y:
-            hist[bin_x, bin_y] += value
-            norm[bin_x, bin_y] += 1
+        # space_lag, time_lag, sq_val_delta
+        space_bin = int(space_lag / space_bin_width)
+        time_bin = int(time_lag / time_bin_width)
 
-    return hist, norm, bin_width_x, bin_width_y
+        if 0 <= space_bin < n_space_bins and\
+                0 <= time_bin < n_time_bins:
+            hist[space_bin, time_bin] += sq_val_delta
+            norm[space_bin, time_bin] += 1
+
+    # I think this "/2" is necessary, because in samples_per_bin are only
+    # n^2/2 samples in total
+    variogram = np.divide(
+        hist,
+        norm,
+        # out=np.ones_like(hist) * np.nan,
+        # where=norm != 0,
+    ) / 2
+
+    for i in range(n_space_bins):
+        for j in range(n_time_bins):
+            if norm[i, j] == 0:
+                variogram[i, j] = np.nan
+
+    return variogram, norm, space_bin_width, time_bin_width

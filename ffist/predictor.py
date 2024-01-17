@@ -15,8 +15,7 @@ except ImportError:
     KERAS_INSTALLED = False
 
 from ffist import Data
-from ffist.utils import get_distances
-from ffist.utils import histogram2d
+from ffist.utils import get_variogram
 from ffist.utils import calc_distance_matrix_1d
 from ffist.utils import calc_distance_matrix_2d
 from ffist.variogram_models import calc_weights
@@ -175,35 +174,17 @@ class Predictor:
         time_coords = self._data.time_coords[idxs]
         residuals = self._residuals[idxs]
 
-        space_lags, time_lags, sq_val_delta = get_distances(
-            space_coords,
-            time_coords,
-            residuals,
-            space_dist_max,
-            time_dist_max,
-            el_max,
-        )
-
-        space_range = (0, space_dist_max)
-        time_range = (0, time_dist_max)
-        hist, samples_per_bin, bin_width_space, bin_width_time = histogram2d(
-            space_lags,
-            time_lags,
-            n_space_bins,
-            n_time_bins,
-            space_range,
-            time_range,
-            sq_val_delta,
-        )
-
-        # I think this "/2" is necessary, because in samples_per_bin are only
-        # n^2/2 samples in total
-        variogram = np.divide(
-            hist,
-            samples_per_bin,
-            out=np.ones_like(hist) * np.nan,
-            where=samples_per_bin != 0,
-        ) / 2
+        variogram, samples_per_bin, bin_width_space, bin_width_time =\
+            get_variogram(
+                space_coords,
+                time_coords,
+                residuals,
+                space_dist_max,
+                time_dist_max,
+                n_space_bins,
+                n_time_bins,
+                el_max,
+            )
 
         bins_space = np.arange(n_space_bins+1) * bin_width_space
         bins_space = ((bins_space[:-1] + bins_space[1:])/2)

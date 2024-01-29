@@ -410,3 +410,51 @@ def test_kriging_regression_cross_val():
     )
     target_scores = [0.64, 0.59, 0.72]
     assert np.isclose(scores, target_scores, rtol=0.1).all()
+
+
+def test_kriging_regression_cross_val_sampling():
+    data = Data(
+        df,
+        space_cols=["x", "y"],
+        time_col="time",
+        predictand_col="PM10",
+        covariate_cols=["time"],
+    )
+
+    covariate_model = LinearRegression()
+    predictor = Predictor(data, covariate_model, cv_splits=3)
+
+    variogram_params = {
+        "space_dist_max": 6e5,
+        "time_dist_max": 7,
+        "n_time_bins": 7,
+        "el_max": 1e8,
+    }
+
+    kriging_params = {
+        "min_kriging_points": 1,
+        "max_kriging_points": 10,
+        "space_dist_max": 2e5,
+    }
+
+    predictor.calc_cross_validation()
+    predictor.plot_cross_validation_residuals(
+        target=tempfile.NamedTemporaryFile(delete=True),
+    )
+
+    predictor.calc_cross_validation(
+        kriging=True,
+        geostat_params={
+            "variogram_params": variogram_params,
+            "kriging_params": kriging_params,
+        },
+        max_test_samples=200,
+    )
+    scores = predictor.get_cross_val_metric(
+        sklearn.metrics.explained_variance_score,
+    )
+    predictor.plot_cross_validation_residuals(
+        target=tempfile.NamedTemporaryFile(delete=True),
+    )
+    target_scores = [0.64, 0.59, 0.72]
+    assert np.isclose(scores, target_scores, rtol=0.5).all()

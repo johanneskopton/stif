@@ -120,11 +120,29 @@ class Predictor:
     def get_residuals(self, idxs=slice(None)):
         return self._y[idxs] - self.get_covariate_probability(idxs)
 
-    def calc_cross_validation(self, kriging=False, geostat_params=dict()):
+    def calc_cross_validation(
+        self,
+        kriging=False,
+        geostat_params=dict(),
+        max_test_samples=None,
+        verbose=False,
+    ):
         cv = sklearn.model_selection.TimeSeriesSplit(n_splits=self._cv_splits)
         ground_truth_list = []
         prediction_list = []
         for fold, (train, test) in enumerate(cv.split(self._X, self._y)):
+            if verbose:
+                print("Fold {}".format(fold))
+                print("\t train: {} samples".format(len(train)))
+                print("\t test: {} samples".format(len(test)))
+            if max_test_samples is not None:
+                # randomly select max_test_samples from test set
+                test = np.random.choice(
+                    test,
+                    size=min(max_test_samples, len(test)),
+                    replace=False,
+                )
+
             self.fit_covariate_model(train)
             ground_truth_list.append(self._y[test])
             prediction = self.get_covariate_probability(test)

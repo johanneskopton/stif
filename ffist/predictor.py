@@ -126,6 +126,7 @@ class Predictor:
         geostat_params=dict(),
         max_test_samples=None,
         verbose=False,
+        empirical_variogram_path=None,
     ):
         cv = sklearn.model_selection.TimeSeriesSplit(n_splits=self._cv_splits)
         ground_truth_list = []
@@ -155,8 +156,16 @@ class Predictor:
                     kriging_params = geostat_params["kriging_params"]
                 else:
                     kriging_params = dict()
-                self.calc_empirical_variogram(train, **variogram_params)
-                self.fit_variogram_model()
+                if "variogram_model_params" in geostat_params.keys():
+                    variogram_model_params =\
+                        geostat_params["variogram_model_params"]
+                else:
+                    variogram_model_params = dict()
+                if empirical_variogram_path is None:
+                    self.calc_empirical_variogram(train, **variogram_params)
+                else:
+                    self.load_empirical_variogram(empirical_variogram_path)
+                self.fit_variogram_model(**variogram_model_params)
                 kriging_mean, kriging_std = self.get_kriging_prediction(
                     self._data.space_coords[test, :],
                     self._data.time_coords[test],

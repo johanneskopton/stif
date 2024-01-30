@@ -324,7 +324,7 @@ class Predictor:
                     == target_i, 0,
                 ]
                 if len(kriging_idxs_target) < min_kriging_points:
-                    kriging_weights[target_i, :] = np.nan
+                    kriging_weights[target_i, :] = 0
                     continue
                 h = np.sqrt(
                     np.sum(

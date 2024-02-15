@@ -118,11 +118,11 @@ class Data:
         """Get the indices of the training data that are within the
         specified spatial and temporal distance."""
         # space_dist_sq = np.sum((self.space_coords - space)**2, axis=1)
-        space_dist_sq = scipy.spatial.distance.cdist(
-            self.space_coords,
-            space,
-            metric='sqeuclidean',
-        )
+        # space_dist_sq = scipy.spatial.distance.cdist(
+        #     self.space_coords,
+        #     space,
+        #     metric='sqeuclidean',
+        # )
         time_dist = scipy.spatial.distance.cdist(
             self.time_coords.reshape(-1, 1), time.reshape(-1, 1),
         )
@@ -130,7 +130,7 @@ class Data:
         if leave_out_idxs is not None:
             index_mask[leave_out_idxs, np.arange(len(time))] = False
         is_close_enough = (
-            (space_dist_sq < space_dist_max**2) &
+            # (space_dist_sq < space_dist_max**2) &
             (time_dist < time_dist_max) &
             (self.time_coords.reshape(-1, 1) <= time.reshape(1, -1)) &
             index_mask

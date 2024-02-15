@@ -324,6 +324,7 @@ class Predictor:
 
         kriging_weights_function = self._kriging_weights_function
         variogram_model_function = self._variogram_model_function
+        distance_metric = self._distance
 
         @nb.njit(fastmath=True, parallel=True)
         def nd_kriging(
@@ -350,7 +351,7 @@ class Predictor:
                 if len(kriging_idxs_target) < min_kriging_points:
                     kriging_weights[target_i, :] = 0
                     continue
-                if self._distance == "euclidean":
+                if distance_metric == "euclidean":
                     h = np.sqrt(
                         np.sum(
                             np.square(
@@ -359,7 +360,7 @@ class Predictor:
                             ), axis=1,
                         ),
                     )
-                elif self._distance == "cosine":
+                elif distance_metric == "cosine":
                     h = cosine_distance(
                         space_coords[kriging_idxs_target, :],
                         space[target_i, :],

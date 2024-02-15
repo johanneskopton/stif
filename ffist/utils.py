@@ -42,7 +42,7 @@ def pair_index_generator(n, n_samples=None):
 
 @nb.njit(fastmath=True)
 def get_variogram(
-    space,
+    features,
     time,
     val,
     space_dist_max,
@@ -50,6 +50,7 @@ def get_variogram(
     n_space_bins,
     n_time_bins,
     n_samples,
+    distance,
 ):
     n = len(val)
 
@@ -60,11 +61,17 @@ def get_variogram(
     norm = np.zeros((n_space_bins, n_time_bins), dtype=np.float64)
 
     for i, j in pair_index_generator(n, n_samples):
-        space_lag = np.sqrt(
-            np.square(space[i, 0]-space[j, 0]) +
-            np.square(space[i, 1]-space[j, 1]),
-        )
-        if space_lag > space_dist_max:
+        if distance == "euclidean":
+            features_lag = np.sqrt(
+                np.square(features[i, 0]-features[j, 0]) +
+                np.square(features[i, 1]-features[j, 1]),
+            )
+        elif distance == "cosine":
+            features_lag = np.dot(features[i, :], features[j, :]) / (
+                np.linalg.norm(features[i, :]) * np.linalg.norm(features[j, :])
+            )
+
+        if features_lag > space_dist_max:
             continue
         time_lag = np.abs(time[i]-time[j])
         if time_lag > time_dist_max:
@@ -72,7 +79,7 @@ def get_variogram(
         sq_val_delta = np.square(val[i]-val[j])
 
         # space_lag, time_lag, sq_val_delta
-        space_bin = int(space_lag / space_bin_width)
+        space_bin = int(features_lag / space_bin_width)
         time_bin = int(time_lag / time_bin_width)
 
         if 0 <= space_bin < n_space_bins and\

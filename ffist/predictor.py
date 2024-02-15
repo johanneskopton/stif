@@ -54,6 +54,8 @@ class Predictor:
         self._X = self._data.get_training_covariates()
         self._y = self._data.predictand
 
+        self.features = None
+
         self._cross_val_res = None
         self._variogram = None
         self._variogram_bins_space = None
@@ -196,14 +198,19 @@ class Predictor:
         n_space_bins=10,
         n_time_bins=10,
         el_max=None,
+        distance="euclidean",
     ):
-        space_coords = self._data.space_coords[idxs, :]
+        if self.features is None:
+            features = self._data.space_coords[idxs, :]
+            print("No features set, using space coordinates.")
+        else:
+            features = self.features[idxs, :]
         time_coords = self._data.time_coords[idxs]
         residuals = self._residuals[idxs]
 
         variogram, samples_per_bin, bin_width_space, bin_width_time =\
             get_variogram(
-                space_coords,
+                features,
                 time_coords,
                 residuals,
                 space_dist_max,
@@ -211,6 +218,7 @@ class Predictor:
                 n_space_bins,
                 n_time_bins,
                 el_max,
+                distance,
             )
 
         bins_space = np.arange(n_space_bins+1) * bin_width_space

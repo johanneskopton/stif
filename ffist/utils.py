@@ -24,6 +24,20 @@ def calc_distance_matrix_2d(vec):
 
 
 @nb.njit(fastmath=True)
+def cosine_distance(x, y):
+    return (1 - np.dot(x, y) / (np.linalg.norm(x) * np.linalg.norm(y))) / 2
+
+
+@nb.njit(fastmath=True)
+def calc_distance_matrix_cosine(vec):
+    res = np.empty((vec.shape[0], vec.shape[0]), dtype=vec.dtype)
+    for i in range(vec.shape[0]):
+        for j in range(vec.shape[0]):
+            res[i, j] = cosine_distance(vec[i, :], vec[j, :])
+    return res
+
+
+@nb.njit(fastmath=True)
 def pair_index_generator(n, n_samples=None):
     if n_samples is None:
         for i in range(n):
@@ -67,12 +81,7 @@ def get_variogram(
                 np.square(features[i, 1]-features[j, 1]),
             )
         elif distance == "cosine":
-            features_lag = (
-                1 - np.dot(features[i, :], features[j, :]) / (
-                    np.linalg.norm(features[i, :]) *
-                    np.linalg.norm(features[j, :])
-                )
-            ) / 2
+            features_lag = cosine_distance(features[i, :], features[j, :])
 
         if features_lag > space_dist_max:
             continue

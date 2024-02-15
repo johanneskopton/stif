@@ -18,6 +18,8 @@ from ffist import Data
 from ffist.utils import get_variogram
 from ffist.utils import calc_distance_matrix_1d
 from ffist.utils import calc_distance_matrix_2d
+from ffist.utils import calc_distance_matrix_cosine
+from ffist.utils import cosine_distance
 from ffist.variogram_models import calc_weights
 from ffist.variogram_models import get_initial_parameters
 from ffist.variogram_models import variogram_model_dict
@@ -61,6 +63,7 @@ class Predictor:
         self._variogram_bins_space = None
         self._variogram_bins_time = None
         self._variogram_model_function = None
+        self._distance = None
         self._kriging_weights_function = None
         self._kriging_function = None
 
@@ -228,6 +231,7 @@ class Predictor:
         bins_time = ((bins_time[:-1] + bins_time[1:])/2)
 
         self._variogram = variogram
+        self._distance = distance
         self._variogram_bins_space = bins_space
         self._variogram_bins_time = bins_time
         self._variogram_samples_per_bin = samples_per_bin
@@ -285,13 +289,16 @@ class Predictor:
         @nb.njit(fastmath=True)
         def calc_kriging_weights(
             kriging_vector,
-            coords_spatial,
+            features,
             coords_temporal,
         ):
             n = len(kriging_vector)
-            spatial_dist = calc_distance_matrix_2d(coords_spatial)
+            if self._distance == "euclidean":
+                feature_dist = calc_distance_matrix_2d(features)
+            elif self._distance == "cosine":
+                feature_dist = calc_distance_matrix_cosine(features)
             temporal_dist = calc_distance_matrix_1d(coords_temporal)
-            A_var = variogram_model_function(spatial_dist, temporal_dist)
+            A_var = variogram_model_function(feature_dist, temporal_dist)
 
             # for Lagrange multiplier
             A = np.ones((n+1, n+1), dtype=A_var.dtype)
@@ -343,14 +350,20 @@ class Predictor:
                 if len(kriging_idxs_target) < min_kriging_points:
                     kriging_weights[target_i, :] = 0
                     continue
-                h = np.sqrt(
-                    np.sum(
-                        np.square(
-                            space_coords[kriging_idxs_target, :] -
-                            space[target_i, :],
-                        ), axis=1,
-                    ),
-                )
+                if self._distance == "euclidean":
+                    h = np.sqrt(
+                        np.sum(
+                            np.square(
+                                space_coords[kriging_idxs_target, :] -
+                                space[target_i, :],
+                            ), axis=1,
+                        ),
+                    )
+                elif self._distance == "cosine":
+                    h = cosine_distance(
+                        space_coords[kriging_idxs_target, :],
+                        space[target_i, :],
+                    )
                 t = np.abs(time_coords[kriging_idxs_target] - time[target_i])
                 kriging_vector = variogram_model_function(h, t)
                 if len(kriging_idxs_target) > max_kriging_points:
@@ -485,11 +498,16 @@ class Predictor:
             time_dist_max,
             leave_out_idxs,
         )
+        if self.features is None:
+            features = self._data.space_coords
+        else:
+            features = self.features
+
         return self._kriging_function(
             space, time,
             kriging_idxs,
             min_kriging_points, max_kriging_points,
-            self._data.space_coords, self._data.time_coords,
+            features, self._data.time_coords,
         )
 
     def get_kriging_prediction(

@@ -67,9 +67,12 @@ def get_variogram(
                 np.square(features[i, 1]-features[j, 1]),
             )
         elif distance == "cosine":
-            features_lag = np.dot(features[i, :], features[j, :]) / (
-                np.linalg.norm(features[i, :]) * np.linalg.norm(features[j, :])
-            )
+            features_lag = (
+                1 - np.dot(features[i, :], features[j, :]) / (
+                    np.linalg.norm(features[i, :]) *
+                    np.linalg.norm(features[j, :])
+                )
+            ) / 2
 
         if features_lag > space_dist_max:
             continue

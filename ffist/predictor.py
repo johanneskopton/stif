@@ -285,6 +285,7 @@ class Predictor:
             raise ValueError("Create variogram model function first.")
 
         variogram_model_function = self._variogram_model_function
+        distance_metric = self._distance
 
         @nb.njit(fastmath=True)
         def calc_kriging_weights(
@@ -293,9 +294,9 @@ class Predictor:
             coords_temporal,
         ):
             n = len(kriging_vector)
-            if self._distance == "euclidean":
+            if distance_metric == "euclidean":
                 feature_dist = calc_distance_matrix_2d(features)
-            elif self._distance == "cosine":
+            elif distance_metric == "cosine":
                 feature_dist = calc_distance_matrix_cosine(features)
             temporal_dist = calc_distance_matrix_1d(coords_temporal)
             A_var = variogram_model_function(feature_dist, temporal_dist)

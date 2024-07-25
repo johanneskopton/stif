@@ -428,7 +428,7 @@ def test_kriging_regression_cross_val_sampling():
         "space_dist_max": 6e5,
         "time_dist_max": 7,
         "n_time_bins": 7,
-        "el_max": 1e8,
+        "el_max": 2e8,
     }
 
     kriging_params = {
@@ -456,5 +456,5 @@ def test_kriging_regression_cross_val_sampling():
     predictor.plot_cross_validation_residuals(
         target=tempfile.NamedTemporaryFile(delete=True),
     )
-    target_scores = [0.64, 0.59, 0.72]
+    target_scores = [0.67, 0.57, 0.78]
     assert np.isclose(scores, target_scores, rtol=0.5).all()

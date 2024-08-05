@@ -41,6 +41,9 @@ else:
 
 
 class Predictor:
+    """Predictor class for space-time prediction.
+    """
+
     def __init__(
         self,
         data: Data,
@@ -48,6 +51,23 @@ class Predictor:
         cv_splits: int = 5,
         resampling=None,
     ):
+        """Constructor for the Predictor class.
+
+        Parameters
+        ----------
+        data : Data
+            Data object containing the data.
+        covariate_model : model_types, optional
+            Covariate model to be used for prediction,
+            can be either a Keras model (`keras.models.Sequential`)
+            or a scikit-learn model (`sklearn.base.BaseEstimator`),
+            by default None
+        cv_splits : int, optional
+            Number of cross validation splits for timeseries cross validation,
+            by default 5
+        resampling: imbalanced-learn sampler, optional
+            Sampler for resampling the input before prediction, by default None
+        """
         self._data = data
         self._cv_splits = cv_splits
         self._resampling = resampling
@@ -77,6 +97,15 @@ class Predictor:
         self._residuals = self.get_residuals()
 
     def fit_covariate_model(self, train_idxs=slice(None)):
+        """Fit the covariate model to the training data.
+
+        Parameters
+        ----------
+        train_idxs : 1d numpy index, optional
+            Indices of the samples used for training. Can be anything
+            that is allowed for indexing a 1d numpy array, e.g. a slice,
+            boolean array or tuple, by default all samples (`slice(None)`)
+        """
         training_X = self._X[train_idxs, :]
         training_y = self._y[train_idxs]
         if self._resampling is not None:
@@ -88,6 +117,15 @@ class Predictor:
         self._prepare_geostatistics()
 
     def save_covariate_model(self, filename):
+        """Save the trained covariate model to a file.
+        Used the Keras model saving function if its a Keras model,
+        otherwise uses pickle.
+
+        Parameters
+        ----------
+        filename : str
+            Filename to save the model to.
+        """
         if self._is_keras_model:
             self._cov_model.save(filename)
         else:
@@ -95,6 +133,15 @@ class Predictor:
                 pickle.dump(self._cov_model, file)
 
     def load_covariate_model(self, filename):
+        """Load a trained covariate model from a file.
+        Uses the Keras model loading function if its a Keras model,
+        otherwise uses pickle.
+
+        Parameters
+        ----------
+        filename : str
+            Filename to load the model from.
+        """
         if self._is_keras_model:
             if not KERAS_INSTALLED:
                 raise ImportError(
@@ -109,6 +156,15 @@ class Predictor:
 
     @property
     def _covariate_prediction_function(self):
+        """Wrapper around the predict function of the covariate model.
+        Difference between binary and non-binary models, as well as Keras
+        and scikit-learn models are abstracted away.
+
+        Returns
+        -------
+        function
+            Function for prediction using the covariate model.
+        """
         if self._is_binary and not self._is_keras_model:
             def res(X): return self._cov_model.predict_proba(X)[:, 1]
         else:
@@ -116,23 +172,84 @@ class Predictor:
         return res
 
     def get_covariate_probability(self, idxs=slice(None)):
+        """Covariate prediction on the input samples.
+        Get the predicted covariate model prediction for the given indices.
+
+        Parameters
+        ----------
+        idxs : 1d numpy index, optional
+            Indices of the samples to predict. Can be anything
+            that is allowed for indexing a 1d numpy array, e.g. a slice,
+            boolean array or tuple, by default all samples (`slice(None)`)
+
+        Returns
+        -------
+        1d numpy array
+            Predicted covariate model predictions.
+        """
         return self._covariate_prediction_function(self._X[idxs]).flatten()
 
     def predict_covariate_probability(self, df):
+        """Covariate prediction on a pandas DataFrame.
+        Get the predicted covariate model prediction for the given DataFrame.
+
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            DataFrame containing the data to predict on.
+
+        Returns
+        -------
+        1d numpy array
+            Predicted covariate model predictions.
+        """
         X = self._data.prepare_covariates(df)
         return self._cov_model.predict(X)
 
     def get_residuals(self, idxs=slice(None)):
+        """Get the residuals of the covariate model.
+
+        Parameters
+        ----------
+        idxs : 1d numpy index, optional
+            Indices of the samples to predict. Can be anything
+            that is allowed for indexing a 1d numpy array, e.g. a slice,
+            boolean array or tuple, by default all samples (`slice(None)`)
+        Returns
+        -------
+        1d numpy array
+            Residuals of the covariate model.
+        """
         return self._y[idxs] - self.get_covariate_probability(idxs)
 
     def calc_cross_validation(
         self,
-        kriging=False,
-        geostat_params=dict(),
-        max_test_samples=None,
-        verbose=False,
-        empirical_variogram_path=None,
+        kriging: bool = False,
+        geostat_params: dict = dict(),
+        max_test_samples: int = -1,
+        verbose: bool = False,
+        empirical_variogram_path: typing.Optional[str] = None,
     ):
+        """Calculate cross validation results for the predictor.
+        Can be used with the covariate model, kriging, or both.
+
+        Parameters
+        ----------
+        kriging : bool, optional
+            Use kriging (otherwise only covariate model), by default False
+        geostat_params : dict, optional
+            Parameters for empirical variogram, variogram model and kriging,
+            by default empty dict.
+        max_test_samples : int, optional
+            Maximum number of test samples to consider per cross validation
+            fold, by default `-1`, meaning no limit
+        verbose : bool, optional
+            Write status for each cross validation fold, by default False
+        empirical_variogram_path : str or None, optional
+            If set, empirical variogram will be read from file instead of
+            calculated for every cross validation split (only relevant for
+            `kriging==True`), by default None
+        """
         cv = sklearn.model_selection.TimeSeriesSplit(n_splits=self._cv_splits)
         ground_truth_list = []
         prediction_list = []
@@ -183,6 +300,25 @@ class Predictor:
         self._cross_val_res = ground_truth_list, prediction_list
 
     def get_cross_val_metric(self, metric):
+        """Calculate a metric for the cross validation results.
+        Apply the gven metric function on each of the cross validation folds.
+
+        Parameters
+        ----------
+        metric : function
+            Metric function to be applied on the cross validation results,
+            e.g. from sklearn.metrics.
+
+        Returns
+        -------
+        List
+            List of metric values for each cross validation fold.
+
+        Raises
+        ------
+        ValueError
+            Raises error if cross validation was not calculated before.
+        """
         if self._cross_val_res is None:
             raise ValueError("Calc cross validation first.")
 
@@ -203,6 +339,46 @@ class Predictor:
         el_max=None,
         distance="euclidean",
     ):
+        """Calculate the empirical space-time variogram for the given samples.
+        Computation is done JIT-compiled using numba and without storing the
+        entire distance matrix in memory.
+
+        The basic formula for calculation is given by:
+        .. math::
+            \\gamma(h, u) = \\frac{1}{2 N(h, u)} \\sum_{i=1}^{N(h, u)} \\left[
+            Z(\\mathbf{s}_i, t_i) - Z(\\mathbf{s}_i + h, t_i + u) \\right]^2
+
+        Notes
+        -----
+        See [1], there called "sample variogram".
+
+        Parameters
+        ----------
+        idxs : 1d numpy index, optional
+            Specify the samples to include, by default all (`slice(None)`)
+        space_dist_max : float, optional
+            Maximum space lag, by default 3
+        time_dist_max : float, optional
+            Maximum time lag, by default 10
+        n_space_bins : int, optional
+            Number of spatial bins, by default 10
+        n_time_bins : int, optional
+            Number of temporal bins, by default 10
+        el_max : int, optional
+            Number of sample pairs to consider before termination, by default
+            uses all sample pairs
+        distance : str, optional
+            Distance metric to use (can be "euclidean" or "cosine"), by
+            default "euclidean"
+
+        References
+        ----------
+        .. [1] G. B. M. Heuvelink, E. Pebesma, and B. Gräler, “Space-Time
+               Geostatistics,” in Encyclopedia of GIS, S. Shekhar, H. Xiong,
+               and X. Zhou, Eds., Cham: SpringerInternational Publishing, 2017,
+               pp. 1919–1926. doi: 10.1007/978-3-319-17885-1_1647.
+
+        """
         if self.features is None:
             features = self._data.space_coords[idxs, :]
             print("No features set, using space coordinates.")
@@ -237,6 +413,21 @@ class Predictor:
         self._variogram_samples_per_bin = samples_per_bin
 
     def save_empirical_variogram(self, filename):
+        """Save empirical variogram to file.
+        Since the empirical variogram is expensive to compute, it can make
+        sense to compute it once and store it, before fitting variogram models
+        or Kriging.
+
+        Parameters
+        ----------
+        filename : str
+            Destination file name.
+
+        Raises
+        ------
+        ValueError
+            Variogram needs to be calculated before.
+        """
         if self._variogram is None:
             raise ValueError("Calc empirical variogoram first.")
         np.savez(
@@ -248,6 +439,13 @@ class Predictor:
         )
 
     def load_empirical_variogram(self, filename):
+        """Load empirical variogram from disc.
+
+        Parameters
+        ----------
+        filename : str
+            Filename to load from.
+        """
         with np.load(filename) as data:
             self._variogram = data["variogram"]
             self._variogram_bins_space = data["bins_space"]
@@ -401,6 +599,33 @@ class Predictor:
         metric_model="spherical",
         plot_anisotropy=False,
     ):
+        """Fit a variogram model to a precalculated empirical variogram.
+
+        Parameters
+        ----------
+        st_model : str, optional
+            Model for combining the spatial and temporal component.
+            Implemented are: "sum", "product", "product_sum", "metric" and
+            "sum_metric", by default "sum_metric"
+        space_model : str, optional
+            Variogram model for the spatial component, can be "spherical"
+            or "gaussian", by default "spherical"
+        time_model : str, optional
+            Variogram model for the temporal component, can be "spherical"
+            or "gaussian", by default "spherical"
+        metric_model : str, optional
+            Variogram model for the metric component, can be "spherical"
+            or "gaussian", by default "spherical"
+        plot_anisotropy : bool, optional
+            Shows a plot of the anisotropy fit if True, by default False
+
+        References
+        ----------
+        .. [1] G. B. M. Heuvelink, E. Pebesma, and B. Gräler, “Space-Time
+               Geostatistics,” in Encyclopedia of GIS, S. Shekhar, H. Xiong,
+               and X. Zhou, Eds., Cham: SpringerInternational Publishing, 2017,
+               pp. 1919–1926. doi: 10.1007/978-3-319-17885-1_1647.
+        """
         slope_space = np.polynomial.polynomial.polyfit(
             self._variogram_bins_space, self._variogram[:, 0], deg=1,
         )[1]

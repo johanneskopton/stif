@@ -1,4 +1,4 @@
-fist package
+FIST package
 ============
 
 

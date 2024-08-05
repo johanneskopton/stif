@@ -258,7 +258,7 @@ class Predictor:
                 print("Fold {}".format(fold))
                 print("\t train: {} samples".format(len(train)))
                 print("\t test: {} samples".format(len(test)))
-            if max_test_samples is not None:
+            if max_test_samples > 0:
                 # randomly select max_test_samples from test set
                 test = np.random.choice(
                     test,

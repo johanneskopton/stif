@@ -41,6 +41,9 @@ setup(
             "flake8",
             "autopep8",
             "pre-commit",
+            "sphinx",
+            "myst-parser",
+            "pydata-sphinx-theme",
         ],
     },
 )

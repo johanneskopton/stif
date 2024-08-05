@@ -4,6 +4,18 @@ import numpy as np
 
 @nb.njit(fastmath=True)
 def calc_distance_matrix_1d(vec):
+    """Calculate full distance matrix for 1D vector.
+
+    Parameters
+    ----------
+    vec : Numpy array of shape (n,)
+        Input vector
+
+    Returns
+    -------
+    NumPy array of shape (n, n)
+        Output matrix
+    """
     res = np.empty((len(vec), len(vec)), dtype=vec.dtype)
     for i in range(len(vec)):
         for j in range(len(vec)):
@@ -13,6 +25,18 @@ def calc_distance_matrix_1d(vec):
 
 @nb.njit(fastmath=True)
 def calc_distance_matrix_2d(vec):
+    """Calculate full distance matrix using euclidean distance.
+
+    Parameters
+    ----------
+    vec : Numpy array of shape (n, 2)
+        Input vector
+
+    Returns
+    -------
+    NumPy array of shape (n, n)
+        Output matrix
+    """
     res = np.empty((vec.shape[0], vec.shape[0]), dtype=vec.dtype)
     for i in range(vec.shape[0]):
         for j in range(vec.shape[0]):
@@ -25,11 +49,37 @@ def calc_distance_matrix_2d(vec):
 
 @nb.njit(fastmath=True)
 def cosine_distance(x, y):
+    """Calculate cosine distance between two vectors.
+
+    Parameters
+    ----------
+    x : Numpy array of shape (n,)
+        Input vector
+    y : Numpy array of shape (n,)
+        Input vector
+
+    Returns
+    -------
+    float
+        Cosine distance
+    """
     return (1 - np.dot(x, y) / (np.linalg.norm(x) * np.linalg.norm(y))) / 2
 
 
 @nb.njit(fastmath=True)
 def calc_distance_matrix_cosine(vec):
+    """Calculate full distance matrix using cosine distance.
+
+    Parameters
+    ----------
+    vec : Numpy array of shape (n, m)
+        Input vector
+
+    Returns
+    -------
+    Numpy array of shape (n, n)
+        Output matrix
+    """
     res = np.empty((vec.shape[0], vec.shape[0]), dtype=vec.dtype)
     for i in range(vec.shape[0]):
         for j in range(vec.shape[0]):
@@ -38,7 +88,7 @@ def calc_distance_matrix_cosine(vec):
 
 
 @nb.njit(fastmath=True)
-def pair_index_generator(n, n_samples=None):
+def _pair_index_generator(n, n_samples=None):
     if n_samples is None:
         for i in range(n):
             for j in range(i+1, n):
@@ -56,7 +106,7 @@ def pair_index_generator(n, n_samples=None):
 
 @nb.njit(fastmath=True)
 def get_variogram(
-    features,
+    space,
     time,
     val,
     space_dist_max,
@@ -66,6 +116,36 @@ def get_variogram(
     n_samples,
     distance,
 ):
+    """Calculate empirical variogram.
+
+    Parameters
+    ----------
+    space : Numpy array of shape (n, 2)
+        Spatial coordinates
+    time : Numpy array of shape (n,)
+        Temporal coordinates
+    val : Numpy array of shape (n,)
+        Values
+    space_dist_max : float
+        Maximum spatial distance
+    time_dist_max : float
+        Maximum temporal distance
+    n_space_bins : int
+        Number of spatial bins
+    n_time_bins : int
+        Number of temporal bins
+    n_samples : int
+        Maximum number of samples
+    distance : str
+        Distance metric (either "euclidean" or "cosine")
+
+    Returns
+    -------
+    tuple
+        Variogram (numpy array of shape (n_space_bins, n_time_bins)),
+        norm (numpy array of shape (n_space_bins, n_time_bins)),
+        space_bin_width (float), time_bin_width (float)
+    """
     n = len(val)
 
     # prepare histogram
@@ -74,16 +154,16 @@ def get_variogram(
     hist = np.zeros((n_space_bins, n_time_bins), dtype=np.float64)
     norm = np.zeros((n_space_bins, n_time_bins), dtype=np.float64)
 
-    for i, j in pair_index_generator(n, n_samples):
+    for i, j in _pair_index_generator(n, n_samples):
         if distance == "euclidean":
-            features_lag = np.sqrt(
-                np.square(features[i, 0]-features[j, 0]) +
-                np.square(features[i, 1]-features[j, 1]),
+            space_lag = np.sqrt(
+                np.square(space[i, 0]-space[j, 0]) +
+                np.square(space[i, 1]-space[j, 1]),
             )
         elif distance == "cosine":
-            features_lag = cosine_distance(features[i, :], features[j, :])
+            space_lag = cosine_distance(space[i, :], space[j, :])
 
-        if features_lag > space_dist_max:
+        if space_lag > space_dist_max:
             continue
         time_lag = np.abs(time[i]-time[j])
         if time_lag > time_dist_max:
@@ -91,7 +171,7 @@ def get_variogram(
         sq_val_delta = np.square(val[i]-val[j])
 
         # space_lag, time_lag, sq_val_delta
-        space_bin = int(features_lag / space_bin_width)
+        space_bin = int(space_lag / space_bin_width)
         time_bin = int(time_lag / time_bin_width)
 
         if 0 <= space_bin < n_space_bins and\

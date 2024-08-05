@@ -215,6 +215,7 @@ class Predictor:
             Indices of the samples to predict. Can be anything
             that is allowed for indexing a 1d numpy array, e.g. a slice,
             boolean array or tuple, by default all samples (`slice(None)`)
+
         Returns
         -------
         1d numpy array
@@ -344,13 +345,14 @@ class Predictor:
         entire distance matrix in memory.
 
         The basic formula for calculation is given by:
+
         .. math::
             \\gamma(h, u) = \\frac{1}{2 N(h, u)} \\sum_{i=1}^{N(h, u)} \\left[
             Z(\\mathbf{s}_i, t_i) - Z(\\mathbf{s}_i + h, t_i + u) \\right]^2
 
         Notes
         -----
-        See [1], there called "sample variogram".
+        See [1]_, there called "sample variogram".
 
         Parameters
         ----------
@@ -601,6 +603,8 @@ class Predictor:
     ):
         """Fit a variogram model to a precalculated empirical variogram.
 
+        More details: [2]_
+
         Parameters
         ----------
         st_model : str, optional
@@ -621,7 +625,7 @@ class Predictor:
 
         References
         ----------
-        .. [1] G. B. M. Heuvelink, E. Pebesma, and B. Gräler, “Space-Time
+        .. [2] G. B. M. Heuvelink, E. Pebesma, and B. Gräler, “Space-Time
                Geostatistics,” in Encyclopedia of GIS, S. Shekhar, H. Xiong,
                and X. Zhou, Eds., Cham: SpringerInternational Publishing, 2017,
                pp. 1919–1926. doi: 10.1007/978-3-319-17885-1_1647.

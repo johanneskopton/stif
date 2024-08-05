@@ -35,6 +35,7 @@ setup(
     extras_require={
         "tensorflow": [
             "tensorflow",
+            "keras",
         ],
         "dev": [
             "pytest",

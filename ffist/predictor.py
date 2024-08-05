@@ -693,7 +693,7 @@ class Predictor:
         self._kriging_function = \
             self._create_kriging_function()
 
-    def get_variogram_model_grid(self):
+    def _get_variogram_model_grid(self):
         if self._variogram_fit is None:
             raise ValueError("Fit variogram model first.")
 
@@ -704,7 +704,7 @@ class Predictor:
         )
         return self._variogram_model_function(h, t)
 
-    def get_kriging_weights(
+    def _get_kriging_weights(
         self,
         space,
         time,
@@ -784,7 +784,7 @@ class Predictor:
         time_dist_max,
         leave_out_idxs,
     ):
-        w, kriging_vectors, kriging_idx_matrix = self.get_kriging_weights(
+        w, kriging_vectors, kriging_idx_matrix = self._get_kriging_weights(
             space, time,
             min_kriging_points,
             max_kriging_points,
@@ -809,7 +809,7 @@ class Predictor:
         target="screen",
     ):
         w, kriging_vectors, kriging_idx_matrix = \
-            self.get_kriging_weights(
+            self._get_kriging_weights(
                 np.array([space]), np.array([time]),
                 min_kriging_points,
                 max_kriging_points,
@@ -983,7 +983,7 @@ class Predictor:
                 time_model=time_model,
                 metric_model=metric_model,
             )
-            grid = self.get_variogram_model_grid()
+            grid = self._get_variogram_model_grid()
             wmse = self._variogram_fit.fun
             ax = fig.add_subplot(2, 3, i+2, projection='3d')
             self._plot_variogram(

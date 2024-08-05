@@ -2,7 +2,7 @@ import numpy as np
 
 from .read_pm10_test_data import df
 from .read_pm10_test_data import df_binary
-from ffist import Data
+from fist import Data
 
 
 def test_init_data_binary():

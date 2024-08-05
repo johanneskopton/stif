@@ -8,14 +8,14 @@ def read(fname):
 
 
 setup(
-    name="ffist",
+    name="fist",
     version="0.0.1",
     author="Johannes Kopton",
     author_email="johannes@kopton.org",
-    description=("Predicting the probability of species ffists"),
+    description=("Predicting the probability of species fists"),
     keywords="kriging species distribution spacetime spatio-temporal",
-    url="https://github.com/johanneskopton/ffist",
-    packages=["ffist"],
+    url="https://github.com/johanneskopton/fist",
+    packages=["fist"],
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
     classifiers=[

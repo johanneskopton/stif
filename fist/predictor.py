@@ -752,6 +752,41 @@ class Predictor:
         leave_out_idxs=None,
         batch_size=1000,
     ):
+        """Get kriging prediction for the given space-time coordinates.
+        The previously fitted variogram model is used together with the
+        training data stored withing the `Predictor` object. The prediction is
+        done in batches to avoid memory issues. Kriging weights are calculated
+        using `numpy.lstsq`. Calculation is accelerated using numba JIT.
+
+        Parameters
+        ----------
+        space : Numpy array of shape (n, 2).
+            Spatial coordinates of the points to predict.
+        time : Numpy array of shape (n,).
+            Temporal coordinates of the points to predict.
+        min_kriging_points : int, optional
+            Minimum number of training points to consider, by default 1
+        max_kriging_points : int, optional
+            Maximum number of training points to consider, by default 10
+        space_dist_max : int|None, optional
+            Maximum spatial distance of training points to consider, by
+            default None
+        time_dist_max : int|None, optional
+            Maximum temporal distance of training points to consider, by
+            default None
+        leave_out_idxs : numpy index, optional
+            Indices of training points not to consider (e.g. for
+            cross-validation), by default None
+        batch_size : int, optional
+            Number of samples to include in one batch (more samples is faster
+            due to numba JIT compilation, but uses more memory), by default
+            1000
+
+        Returns
+        -------
+        tuple of two 1d numpy arrays
+            Mean and standard deviation of the kriging prediction.
+        """
         n_targets = len(time)
         if space_dist_max is None:
             space_dist_max = self._variogram_bins_space[-1] / 2
@@ -812,6 +847,21 @@ class Predictor:
         max_kriging_points=100,
         target="screen",
     ):
+        """Plot the kriging weights for a given space-time coordinate.
+
+        Parameters
+        ----------
+        space : iterable of length 2
+            Space coordinates of the point to plot.
+        time : float
+            Time coordinate of the point to plot.
+        min_kriging_points : int, optional
+            Minimum number of Kriging points, by default 10
+        max_kriging_points : int, optional
+            Maximum number of Kriging points, by default 100
+        target : str, optional
+            If not "screen", path to write the figure to, by default "screen"
+        """
         w, kriging_vectors, kriging_idx_matrix = \
             self._get_kriging_weights(
                 np.array([space]), np.array([time]),
@@ -844,6 +894,18 @@ class Predictor:
             fig.savefig(target)
 
     def plot_cross_validation_roc(self, target="screen"):
+        """Plot ROC curve for the cross validation results.
+
+        Parameters
+        ----------
+        target : str, optional
+            If not "screen", path to write the figure to, by default "screen"
+
+        Raises
+        ------
+        ValueError
+            Raises error if cross validation was not calculated before.
+        """
         if self._cross_val_res is None:
             raise ValueError("Calc cross validation first.")
 
@@ -921,6 +983,26 @@ class Predictor:
         vrange=(None, None),
         title="",
     ):
+        """Plot the empirical variogram in a surface plot.
+        Semivariance over space and time lags.
+
+        Parameters
+        ----------
+        fig : matplotlib figure, optional
+            Existing figure to plot the variogram to (needs also `ax` to be
+            set), by default None
+        ax : matplotlib axis, optional
+            Existing axis to plot the variogram to, by default None
+        vrange : tuple(float), optional
+            Value range minimum and maximum, by default (None, None)
+        title : str, optional
+            Axis title, by default ""
+
+        Raises
+        ------
+        ValueError
+            _description_
+        """
         if self._variogram is None:
             raise ValueError("Calc variogram first.")
 
@@ -975,6 +1057,22 @@ class Predictor:
         metric_model="spherical",
         target="screen",
     ):
+        """Plot the empirical variogram and the fitted variogram models.
+
+        Parameters
+        ----------
+        space_model : str, optional
+            Model for spatial variogram component ("spherical" or "gaussian"),
+            by default "spherical"
+        time_model : str, optional
+            Model for temporal variogram component ("spherical" or "gaussian"),
+            by default "spherical"
+        metric_model : str, optional
+            Model for metric variogram component ("spherical" or "gaussian"),
+            by default "spherical"
+        target : str, optional
+            If not "screen", path to write the figure to, by default "screen"
+        """
         fig = plt.figure(figsize=(17, 10))
         ax = fig.add_subplot(2, 3, 1, projection='3d')
         self.plot_empirical_variogram(fig, ax, title="empirical")
@@ -1001,6 +1099,18 @@ class Predictor:
             fig.savefig(target)
 
     def plot_cross_validation_residuals(self, target="screen"):
+        """Plot residuals for the cross validation results.
+
+        Parameters
+        ----------
+        target : str, optional
+            If not "screen", path to write the figure to, by default "screen"
+
+        Raises
+        ------
+        ValueError
+            Raises error if cross validation was not calculated before.
+        """
         if self._cross_val_res is None:
             raise ValueError("Calc cross validation first.")
 

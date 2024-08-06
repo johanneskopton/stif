@@ -162,3 +162,6 @@ cython_debug/
 # Custom
 */data/*
 experiments/
+
+docs/source/_static/reports/
+docs/source/_static/*-badge.svg

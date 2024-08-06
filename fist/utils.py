@@ -40,11 +40,8 @@ def calc_distance_matrix_2d(vec):
     res = np.empty((vec.shape[0], vec.shape[0]), dtype=vec.dtype)
     for i in range(vec.shape[0]):
         for j in range(vec.shape[0]):
-            res[i, j] = np.sqrt(
-                (vec[i, 0]-vec[j, 0])**2 +
-                (vec[i, 1]-vec[j, 1])**2,
-            )
-    return res
+            res[i, j] = (vec[i, 0]-vec[j, 0]) ** 2 + (vec[i, 1]-vec[j, 1])**2
+    return np.sqrt(res)
 
 
 @nb.njit(fastmath=True)

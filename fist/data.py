@@ -83,7 +83,7 @@ class Data:
         self._covariate_transformations = covariate_transformations
 
     @cached_property
-    def normalization_bounds(self):
+    def _normalization_bounds(self):
         normalization_bounds = dict()
         for column in self._training_df.columns:
             if self._training_df[column].dtype.kind in 'iuf':

@@ -9,6 +9,24 @@ import scipy.spatial.distance
 
 @nb.njit(fastmath=True)
 def sinusoidal_feature_transform(x, n_freqs=6, full_circle=None):
+    """Transform a 1D array into a sinusoidal feature space.
+    Helpful for transforming the time dimension to better capture
+    periodic (e.g. seasonal) patterns.
+
+    Parameters
+    ----------
+    x : numpy array of shape (n,)
+        The input array to be transformed
+    n_freqs : int, optional
+        Number of frequencies, by default 6
+    full_circle : float|None, optional
+        Period length, e.g. one year, by default `x.max()-x.min()`
+
+    Returns
+    -------
+    numpy array of shape (n, n_freqs)
+        The transformed array
+    """
     if full_circle is None:
         full_circle = x.max() - x.min()
 
@@ -75,22 +93,57 @@ class Data:
         return normalization_bounds
 
     def normalize(self, array, col_name):
-        norm_min, norm_max = self.normalization_bounds[col_name]
+        norm_min, norm_max = self._normalization_bounds[col_name]
         return (array - norm_min) / (norm_max - norm_min)
 
     @property
     def space_coords(self):
+        """Get the spatial coordinates of the training data.
+
+        Returns
+        -------
+        Numpy array of shape (n, 2)
+            The spatial coordinates
+        """
         return self._training_df[self._space_cols].to_numpy()
 
     @property
     def time_coords(self):
+        """Get the temporal coordinates of the training data.
+
+        Returns
+        -------
+        Numpy array of shape (n,)
+            The temporal coordinates
+        """
         return self._training_df[self._time_col].to_numpy()
 
     @property
     def predictand(self):
+        """Get the predictand values of the training data.
+
+        Returns
+        -------
+        Numpy array of shape (n,)
+            The predictand values
+        """
         return self._training_df[self._predictand_col].to_numpy()
 
     def prepare_covariates(self, df):
+        """Transform the covariates from a Dataframe with train or test data.
+        To apply the prediction model on unseen data, the covariates
+        need to be transformed in the same way as the training data.
+
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            The unstructured space-time data with one observation per row.
+
+        Returns
+        -------
+        numpy array of shape (n, m)
+            The transformed covariates
+        """
         X = np.empty((len(df), 0), dtype=float)
         for i, covariate_col in enumerate(self._covariate_cols):
             col_array = df[covariate_col].to_numpy(copy=True)
@@ -105,6 +158,13 @@ class Data:
         return X
 
     def get_training_covariates(self):
+        """Get the transformed covariates of the training data.
+
+        Returns
+        -------
+        Numpy array of shape (n, m)
+            The transformed covariates
+        """
         return self.prepare_covariates(self._training_df)
 
     def get_kriging_idxs(
@@ -116,7 +176,21 @@ class Data:
             leave_out_idxs,
     ):
         """Get the indices of the training data that are within the
-        specified spatial and temporal distance."""
+        specified spatial and temporal distance.
+
+        Parameters
+        ----------
+        space : numpy array of shape (n, 2)
+            The spatial coordinates
+        time : numpy array of shape (n,)
+            The temporal coordinates
+        space_dist_max : float
+            Maximum spatial distance
+        time_dist_max : float
+            Maximum temporal distance
+        leave_out_idxs : numpy index
+            The indices to be left out (e.g. for cross-validation)
+        """
         # space_dist_sq = np.sum((self.space_coords - space)**2, axis=1)
         # space_dist_sq = scipy.spatial.distance.cdist(
         #     self.space_coords,

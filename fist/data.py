@@ -8,7 +8,7 @@ import scipy.spatial.distance
 
 
 @nb.njit(fastmath=True)
-def sinusodial_feature_transform(x, n_freqs=6, full_circle=None):
+def sinusoidal_feature_transform(x, n_freqs=6, full_circle=None):
     if full_circle is None:
         full_circle = x.max() - x.min()
 

@@ -16,7 +16,7 @@ from .read_pm10_test_data import df
 from .read_pm10_test_data import df_binary
 from fist import Data
 from fist import Predictor
-from fist import sinusodial_feature_transform
+from fist import sinusoidal_feature_transform
 
 
 def test_covariance_predictor_binary():
@@ -80,9 +80,9 @@ def test_sinusodials():
         time_col="time",
         covariate_cols=["x", "y", "time"],
         covariate_transformations={
-            "x": sinusodial_feature_transform,
-            "y": sinusodial_feature_transform,
-            "time": lambda x: sinusodial_feature_transform(
+            "x": sinusoidal_feature_transform,
+            "y": sinusoidal_feature_transform,
+            "time": lambda x: sinusoidal_feature_transform(
                 x,
                 n_freqs=5,
                 full_circle=365,
@@ -111,9 +111,9 @@ def test_covariance_predictor_transformation_binary():
         time_col="time",
         covariate_cols=["x", "y", "time"],
         covariate_transformations={
-            "x": sinusodial_feature_transform,
-            "y": sinusodial_feature_transform,
-            "time": lambda x: sinusodial_feature_transform(
+            "x": sinusoidal_feature_transform,
+            "y": sinusoidal_feature_transform,
+            "time": lambda x: sinusoidal_feature_transform(
                 x,
                 n_freqs=2,
                 full_circle=365,

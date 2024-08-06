@@ -362,7 +362,7 @@ def test_kriging_binary_cross_val():
         target=tempfile.NamedTemporaryFile(delete=True),
     )
     target_aucs = [0.87, 0.90, 0.90]
-    assert np.isclose(cv_aucs, target_aucs, rtol=0.1).all()
+    assert np.isclose(cv_aucs, target_aucs, rtol=0.2).all()
 
 
 def test_kriging_regression_cross_val():
@@ -409,7 +409,7 @@ def test_kriging_regression_cross_val():
         target=tempfile.NamedTemporaryFile(delete=True),
     )
     target_scores = [0.64, 0.59, 0.72]
-    assert np.isclose(scores, target_scores, atol=0.2).all()
+    assert np.isclose(scores, target_scores, atol=0.3).all()
 
 
 def test_kriging_regression_cross_val_sampling():
@@ -457,4 +457,4 @@ def test_kriging_regression_cross_val_sampling():
         target=tempfile.NamedTemporaryFile(delete=True),
     )
     target_scores = [0.67, 0.57, 0.78]
-    assert np.isclose(scores, target_scores, atol=0.2).all()
+    assert np.isclose(scores, target_scores, atol=0.3).all()

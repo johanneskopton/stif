@@ -39,6 +39,9 @@ setup(
         ],
         "dev": [
             "pytest",
+            "pytest-cov",
+            "pytest-html",
+            "genbadge[all]",
             "flake8",
             "autopep8",
             "pre-commit",

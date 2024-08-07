@@ -4,7 +4,7 @@
 [![Test coverage](https://johannes.kopton.org/stif/_static/coverage-badge.svg)](https://johannes.kopton.org/stif/_static/reports/htmlcov/index.html)
 [![Flake8](https://johannes.kopton.org/stif/_static/flake8-badge.svg)](https://johannes.kopton.org/stif/_static/reports/flake8)
 
-"Forecasting and Interpolation in Space and Time"
+"Space-time interpolation and forecasting"
 
 Package for predicting spatio-temporally distributed variables via *space-time regression Kriging*, using numpy and numba.
 

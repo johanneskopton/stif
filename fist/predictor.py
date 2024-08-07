@@ -1149,7 +1149,7 @@ residuals")
         ground_truth, pred = self._cross_val_res
 
         maximum = 0
-        minimum = np.infty
+        minimum = np.inf
         for fold in range(self._cv_splits):
             maximum = max(
                 maximum,

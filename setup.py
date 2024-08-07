@@ -61,6 +61,7 @@ setup(
             "sphinx",
             "myst-parser",
             "pydata-sphinx-theme",
+            "tox",
         ],
     },
 )

@@ -18,7 +18,11 @@ You can also do something like space-time regression Kriging using one of the mo
 Via pip:
 
 ```sh
-pip install .
+pip install .                   # for the core package
+pip install .[tensorflow]       # for using tensorflow/keras models for covariate regression
+pip install .[geo]              # for using coordinate transformations and geo I/O
+pip install .[interactive]      # for running the example jupyter notebooks
+pip install .[dev]              # for all the development tools used in this project
 ```
 
 ## Development

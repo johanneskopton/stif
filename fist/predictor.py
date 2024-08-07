@@ -839,6 +839,17 @@ class Predictor:
         kriging_std = np.sqrt(np.sum(w * kriging_vectors, axis=1))
         return kriging_mean, kriging_std
 
+    def predict(self, df, kriging_params=dict()):
+        covariate_prediction = self.predict_covariate_probability(df)
+        space = df[self._data._space_cols].to_numpy()
+        time = df[self._data._time_col].to_numpy()
+        kriging_mean, kriging_std = self.get_kriging_prediction(
+            space,
+            time,
+            **kriging_params
+        )
+        return covariate_prediction + kriging_mean, kriging_std
+
     def plot_kriging_weights(
         self,
         space,

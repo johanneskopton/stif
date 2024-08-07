@@ -43,6 +43,7 @@ setup(
             "pytest-html",
             "genbadge[all]",
             "flake8",
+            "flake8-html",
             "autopep8",
             "pre-commit",
             "sphinx",

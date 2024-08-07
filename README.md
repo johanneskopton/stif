@@ -31,6 +31,7 @@ Reports and badges:
 coverage html -d docs/source/_static/reports/htmlcov
 coverage xml -o docs/source/_static/reports/coverage.xml
 flake8 --statistics --tee --output-file docs/source/_static/reports/flake8stats.txt
+flake8 --format=html --htmldir=docs/source/_static/reports/flake8
 genbadge tests -i docs/source/_static/reports/junit/junit.xml -o docs/source/_static/tests-badge.svg
 genbadge coverage -i docs/source/_static/reports/coverage.xml -o docs/source/_static/coverage-badge.svg
 genbadge flake8 -i docs/source/_static/reports/flake8stats.txt -o docs/source/_static/flake8-badge.svg

@@ -65,6 +65,6 @@ Heavily inspired by [^3] and the space-time variogram implementation in the R pa
 
 [^1]: B. Graeler, E. Pebesma, and G. Heuvelink, “Spatio-Temporal Interpolation using gstat,” The R Journal, vol. 8, pp. 204–218, Jan. 2016, doi: 10.32614/RJ-2016-014.
 
-[^2] M. Mälicke, “SciKit-GStat 1.0: a SciPy-flavored geostatistical variogram estimation toolbox written in Python,” Geoscientific Model Development, vol. 15, no. 6, pp. 2505–2532, Mar. 2022, doi: 10.5194/gmd-15-2505-2022.
+[^2]: M. Mälicke, “SciKit-GStat 1.0: a SciPy-flavored geostatistical variogram estimation toolbox written in Python,” Geoscientific Model Development, vol. 15, no. 6, pp. 2505–2532, Mar. 2022, doi: 10.5194/gmd-15-2505-2022.
 
 [^3]: G. B. M. Heuvelink, E. Pebesma, and B. Gräler, “Space-Time Geostatistics,” in Encyclopedia of GIS, S. Shekhar, H. Xiong, and X. Zhou, Eds., Cham: Springer International Publishing, 2017, pp. 1919–1926. doi: 10.1007/978-3-319-17885-1_1647.

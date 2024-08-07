@@ -1,7 +1,7 @@
-FIST
+STIF
 ====
 
 .. toctree::
    :maxdepth: 4
 
-   fist
+   stif

@@ -8,7 +8,7 @@ import os
 import sys
 
 
-project = 'FIST'
+project = 'STIF'
 copyright = '2024, Johannes Kopton'
 author = 'Johannes Kopton'
 
@@ -43,4 +43,4 @@ html_theme = 'pydata_sphinx_theme'
 html_static_path = ['_static']
 
 # Ensure that Sphinx can find your code
-sys.path.insert(0, os.path.abspath('../../fist'))
+sys.path.insert(0, os.path.abspath('../../stif'))

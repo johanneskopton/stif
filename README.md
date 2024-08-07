@@ -1,8 +1,8 @@
-# FIST ✊
+# STIF
 
-[![Test](https://johannes.kopton.org/fist/_static/tests-badge.svg)](https://johannes.kopton.org/fist/_static/reports/junit/report.html)
-[![Test coverage](https://johannes.kopton.org/fist/_static/coverage-badge.svg)](https://johannes.kopton.org/fist/_static/reports/htmlcov/index.html)
-[![Flake8](https://johannes.kopton.org/fist/_static/flake8-badge.svg)](https://johannes.kopton.org/fist/_static/reports/flake8)
+[![Test](https://johannes.kopton.org/stif/_static/tests-badge.svg)](https://johannes.kopton.org/stif/_static/reports/junit/report.html)
+[![Test coverage](https://johannes.kopton.org/stif/_static/coverage-badge.svg)](https://johannes.kopton.org/stif/_static/reports/htmlcov/index.html)
+[![Flake8](https://johannes.kopton.org/stif/_static/flake8-badge.svg)](https://johannes.kopton.org/stif/_static/reports/flake8)
 
 "Forecasting and Interpolation in Space and Time"
 
@@ -10,15 +10,15 @@ Package for predicting spatio-temporally distributed variables via *space-time r
 
 ## Resources
 
-* [Introduction Notebook](https://github.com/johanneskopton/fist/blob/main/docs/introduction.ipynb) <a target="_blank" href="https://colab.research.google.com/github/johanneskopton/fist/blob/main/docs/introduction.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
-* [Documentation and API reference](https://johannes.kopton.org/fist)
-* [Issue tracker](https://github.com/johanneskopton/fist/issues)
+* [Introduction Notebook](https://github.com/johanneskopton/stif/blob/main/docs/introduction.ipynb) <a target="_blank" href="https://colab.research.google.com/github/johanneskopton/stif/blob/main/docs/introduction.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+* [Documentation and API reference](https://johannes.kopton.org/stif)
+* [Issue tracker](https://github.com/johanneskopton/stif/issues)
 
 ## Examples
 
-![Example variogram models](https://raw.githubusercontent.com/johanneskopton/fist/main/docs/source/_static/demo_variogram.png)
+![Example variogram models](https://raw.githubusercontent.com/johanneskopton/stif/main/docs/source/_static/demo_variogram.png)
 
-![Example PM10 predictions for 2015-03-01 for Germany](https://raw.githubusercontent.com/johanneskopton/fist/main/docs/source/_static/demo_map.png)
+![Example PM10 predictions for 2015-03-01 for Germany](https://raw.githubusercontent.com/johanneskopton/stif/main/docs/source/_static/demo_map.png)
 
 ## Space-time regression Kriging
 Using this package, you can do _space-time regression Kriging_. But what is it exactly? Imagine you have measurements on different days and distributed over a geographical region (basically a table with latitude, longitude, time and the measured variable of interest). And now you want to estimate the value of this variable at locations and dates, at which you didn't measure. This can be the future (forecasting) or just some day in between, where no measurement was taken (interpolation). You may have some other variables (external covariates), that can explain some of the variation of you variable of interest via some form of regression. In this case, it makes sense to do the Kriging only on the residuals of this regression (i.e. *regression Kriging*). All of this, you can do using this package (and hopefully as simple as possible).
@@ -32,7 +32,7 @@ There is the excellent [scikit-gstat](https://github.com/mmaelicke/scikit-gstat)
 You can also do something like space-time regression Kriging using one of the more mature Gaussian process libraries out there (since Kriging is actually just Gaussian process regression), but they won't provide you with nice variograms and all the other geostats stuff.
 
 <!--
-<center><img src="https://raw.githubusercontent.com/johanneskopton/fist/main/docs/source/_static/demo1.gif" alt="Example: PM10 values in Germany" width="500"/></center>
+<center><img src="https://raw.githubusercontent.com/johanneskopton/stif/main/docs/source/_static/demo1.gif" alt="Example: PM10 values in Germany" width="500"/></center>
 -->
 ## Installation
 
@@ -57,7 +57,7 @@ pip install -e .[dev]
 Testing:
 
 ```sh
-pytest --cov=fist --junitxml=docs/source/_static/reports/junit/junit.xml --html=docs/source/_static/reports/junit/report.html
+pytest --cov=stif --junitxml=docs/source/_static/reports/junit/junit.xml --html=docs/source/_static/reports/junit/report.html
 ```
 
 Reports and badges:

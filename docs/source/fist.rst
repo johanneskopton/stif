@@ -1,11 +1,11 @@
-FIST package
+STIF package
 ============
 
 
 `Data` object
 -------------
 
-.. automodule:: fist.data
+.. automodule:: stif.data
    :members:
    :undoc-members:
    :show-inheritance:
@@ -13,7 +13,7 @@ FIST package
 `Predictor` object
 ------------------
 
-.. automodule:: fist.predictor
+.. automodule:: stif.predictor
    :members:
    :undoc-members:
    :show-inheritance:
@@ -21,7 +21,7 @@ FIST package
 Utils
 -----
 
-.. automodule:: fist.utils
+.. automodule:: stif.utils
    :members:
    :undoc-members:
    :show-inheritance:
@@ -29,7 +29,7 @@ Utils
 Variogram models
 ----------------
 
-.. automodule:: fist.variogram_models
+.. automodule:: stif.variogram_models
    :members:
    :undoc-members:
    :show-inheritance:

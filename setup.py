@@ -8,14 +8,14 @@ def read(fname):
 
 
 setup(
-    name="fist",
+    name="stif",
     version="0.0.1",
     author="Johannes Kopton",
     author_email="johannes@kopton.org",
     description=("Forecasting and Interpolation in Space and Time"),
     keywords="kriging variogram spacetime spatio-temporal",
-    url="https://github.com/johanneskopton/fist",
-    packages=["fist"],
+    url="https://github.com/johanneskopton/stif",
+    packages=["stif"],
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
     classifiers=[

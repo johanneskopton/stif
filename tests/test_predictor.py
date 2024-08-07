@@ -14,9 +14,9 @@ from sklearn.neural_network import MLPClassifier
 
 from .read_pm10_test_data import df
 from .read_pm10_test_data import df_binary
-from fist import Data
-from fist import Predictor
-from fist import sinusoidal_feature_transform
+from stif import Data
+from stif import Predictor
+from stif import sinusoidal_feature_transform
 
 
 def test_covariance_predictor_binary():

@@ -14,14 +14,14 @@ try:
 except ImportError:
     KERAS_INSTALLED = False
 
-from fist import Data
-from fist.utils import get_variogram
-from fist.utils import calc_distance_matrix_1d
-from fist.utils import calc_distance_matrix_2d
-from fist.variogram_models import calc_weights
-from fist.variogram_models import get_initial_parameters
-from fist.variogram_models import variogram_model_dict
-from fist.variogram_models import weighted_mean_square_error
+from stif import Data
+from stif.utils import get_variogram
+from stif.utils import calc_distance_matrix_1d
+from stif.utils import calc_distance_matrix_2d
+from stif.variogram_models import calc_weights
+from stif.variogram_models import get_initial_parameters
+from stif.variogram_models import variogram_model_dict
+from stif.variogram_models import weighted_mean_square_error
 plt.style.use("seaborn-v0_8-whitegrid")
 
 

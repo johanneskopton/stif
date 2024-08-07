@@ -8,11 +8,14 @@
 
 Package for predicting spatio-temporally distributed variables via *space-time regression Kriging*, using numpy and numba.
 
-For a quick start and lots of examples, view the [Introduction Notebook](https://github.com/johanneskopton/fist/blob/main/docs/introduction.ipynb) <a target="_blank" href="https://colab.research.google.com/github/johanneskopton/fist/blob/main/docs/introduction.ipynb">
+## Resources
+* [Introduction Notebook](https://github.com/johanneskopton/fist/blob/main/docs/introduction.ipynb) <a target="_blank" href="https://colab.research.google.com/github/johanneskopton/fist/blob/main/docs/introduction.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
+* [Documentation and API reference](https://johannes.kopton.org/fist)
+* [Issue tracker](https://github.com/johanneskopton/fist/issues)
 
-This is what you can do with it:
+## Examples
 
 ![Example variogram models](https://raw.githubusercontent.com/johanneskopton/fist/main/docs/source/_static/demo_variogram.png)
 
@@ -29,8 +32,9 @@ There is the excellent [scikit-gstat](https://github.com/mmaelicke/scikit-gstat)
 
 You can also do something like space-time regression Kriging using one of the more mature Gaussian process libraries out there (since Kriging is actually just Gaussian process regression), but they won't provide you with nice variograms and all the other geostats stuff.
 
+<!--
 <center><img src="https://raw.githubusercontent.com/johanneskopton/fist/main/docs/source/_static/demo1.gif" alt="Example: PM10 values in Germany" width="500"/></center>
-
+-->
 ## Installation
 
 Via pip:

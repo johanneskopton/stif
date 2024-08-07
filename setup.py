@@ -41,6 +41,14 @@ setup(
             "tensorflow",
             "keras",
         ],
+        "geo": [
+            "geopandas",
+            "shapely",
+            "rasterio",
+        ],
+        "interactive": [
+            "ipykernel",
+        ],
         "dev": [
             "pytest",
             "pytest-cov",

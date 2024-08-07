@@ -204,11 +204,11 @@ class Predictor:
         1d numpy array
             Predicted covariate model predictions.
         """
-        if self._cov_model is not None:
-            X = self._data.prepare_covariates(df)
-            return self._cov_model.predict(X)
-        else:
+        if self._cov_model is None:
             return np.zeros(len(df))
+        else:
+            X = self._data.prepare_covariates(df)
+            return self._covariate_prediction_function(X)
 
     def get_residuals(self, idxs=slice(None)):
         """Get the residuals of the covariate model.

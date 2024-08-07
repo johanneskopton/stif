@@ -14,6 +14,14 @@ Package for predicting spatio-temporally distributed variables via *space-time r
 * [Documentation and API reference](https://johannes.kopton.org/stif)
 * [Issue tracker](https://github.com/johanneskopton/stif/issues)
 
+What you can do with this package:
+
+* create space-time variograms (even on very large datasets)
+* fit space-time variogram models (e.g. using `product_sum` or `sum_metric` models)
+* fit regression models on covariates
+* perform space-time variogram Kriging to interpolate/extrapolate from the input data
+* do all this with binary (presence/absence) indicators, e.g. for dynamic species distribution modeling
+
 ## Examples
 
 ![Example variogram models](https://raw.githubusercontent.com/johanneskopton/stif/main/docs/source/_static/demo_variogram.png)
@@ -82,7 +90,7 @@ sphinx-build -M html docs/source/ docs/build/
 ```
 
 ## Acknowledgements
-Heavily inspired by [^3] and the space-time variogram implementation in the R package [gstat](http://r-spatial.github.io/gstat/) [^1]. Thanks a lot to Sytze de Bruin from Wageningen University for a lot of help with the geostatistics.
+Heavily inspired by [^3] and the space-time variogram implementation in the R package [gstat](http://r-spatial.github.io/gstat/). Thanks a lot to Sytze de Bruin from Wageningen University for a lot of help with the geostatistics.
 
 [^1]: B. Graeler, E. Pebesma, and G. Heuvelink, “Spatio-Temporal Interpolation using gstat,” The R Journal, vol. 8, pp. 204–218, Jan. 2016, doi: 10.32614/RJ-2016-014.
 

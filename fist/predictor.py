@@ -76,8 +76,6 @@ class Predictor:
         self._X = self._data.get_training_covariates()
         self._y = self._data.predictand
 
-        self.features = None
-
         self._cross_val_res = None
         self._variogram = None
         self._variogram_bins_space = None
@@ -387,11 +385,7 @@ class Predictor:
                pp. 1919–1926. doi: 10.1007/978-3-319-17885-1_1647.
 
         """
-        if self.features is None:
-            features = self._data.space_coords[idxs, :]
-            print("No features set, using space coordinates.")
-        else:
-            features = self.features[idxs, :]
+        space_coords = self._data.space_coords[idxs, :]
         time_coords = self._data.time_coords[idxs]
 
         self._prepare_geostatistics()
@@ -406,7 +400,7 @@ residuals")
 
         variogram, samples_per_bin, bin_width_space, bin_width_time =\
             get_variogram(
-                features,
+                space_coords,
                 time_coords,
                 residuals,
                 space_dist_max,
@@ -505,14 +499,14 @@ residuals")
         @nb.njit(fastmath=True)
         def calc_kriging_weights(
             kriging_vector,
-            features,
+            coords_spatial,
             coords_temporal,
         ):
             n = len(kriging_vector)
             if distance_metric == "euclidean":
-                feature_dist = calc_distance_matrix_2d(features)
+                feature_dist = calc_distance_matrix_2d(coords_spatial)
             elif distance_metric == "cosine":
-                feature_dist = calc_distance_matrix_cosine(features)
+                feature_dist = calc_distance_matrix_cosine(coords_spatial)
             temporal_dist = calc_distance_matrix_1d(coords_temporal)
             A_var = variogram_model_function(feature_dist, temporal_dist)
 
@@ -744,16 +738,12 @@ residuals")
             time_dist_max,
             leave_out_idxs,
         )
-        if self.features is None:
-            features = self._data.space_coords
-        else:
-            features = self.features
 
         return self._kriging_function(
             space, time,
             kriging_idxs,
             min_kriging_points, max_kriging_points,
-            features, self._data.time_coords,
+            self._data.space_coords, self._data.time_coords,
         )
 
     def get_kriging_prediction(

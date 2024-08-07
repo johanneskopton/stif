@@ -446,6 +446,38 @@ def test_predict_regression():
                       [10, 5], rtol=0.5).all()
 
 
+def test_predict_regression_no_cov_model():
+    data = Data(
+        df.iloc[:-10],
+        space_cols=["x", "y"],
+        time_col="time",
+        predictand_col="PM10",
+        covariate_cols=["time"],
+    )
+
+    predictor = Predictor(data)
+
+    variogram_params = {
+        "space_dist_max": 6e5,
+        "time_dist_max": 7,
+        "n_time_bins": 7,
+        "el_max": 1e7,
+    }
+
+    kriging_params = {
+        "min_kriging_points": 10,
+        "max_kriging_points": 100,
+        "space_dist_max": 2e5,
+    }
+
+    predictor.calc_empirical_variogram(**variogram_params)
+    predictor.fit_variogram_model(st_model="sum_metric")
+    mean, std = predictor.predict(
+        df.iloc[-10:].drop(columns=["PM10"]), kriging_params)
+    assert np.isclose([np.average(mean), np.average(std)],
+                      [10, 5], rtol=0.5).all()
+
+
 def test_kriging_regression_cross_val_sampling():
     data = Data(
         df,

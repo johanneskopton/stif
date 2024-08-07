@@ -113,8 +113,8 @@ class Predictor:
                 training_X, training_y,
             )
 
-        self._cov_model.fit(training_X, training_y)
-        self._prepare_geostatistics()
+        if self._cov_model is not None:
+            self._cov_model.fit(training_X, training_y)
 
     def save_covariate_model(self, filename):
         """Save the trained covariate model to a file.
@@ -203,8 +203,11 @@ class Predictor:
         1d numpy array
             Predicted covariate model predictions.
         """
-        X = self._data.prepare_covariates(df)
-        return self._cov_model.predict(X)
+        if self._cov_model is not None:
+            X = self._data.prepare_covariates(df)
+            return self._cov_model.predict(X)
+        else:
+            return np.zeros(len(df))
 
     def get_residuals(self, idxs=slice(None)):
         """Get the residuals of the covariate model.
@@ -221,7 +224,10 @@ class Predictor:
         1d numpy array
             Residuals of the covariate model.
         """
-        return self._y[idxs] - self.get_covariate_probability(idxs)
+        if self._cov_model is not None:
+            return self._y[idxs] - self.get_covariate_probability(idxs)
+        else:
+            return self._y[idxs]
 
     def calc_cross_validation(
         self,
@@ -387,6 +393,15 @@ class Predictor:
         else:
             features = self.features[idxs, :]
         time_coords = self._data.time_coords[idxs]
+
+        self._prepare_geostatistics()
+
+        if self._residuals is None and self._cov_model is not None:
+            raise ValueError(
+                "Covariate model is set, but was not fitted yet. Please fit \
+the covaraite model first, so the variogram can be calculated on the\
+residuals")
+
         residuals = self._residuals[idxs]
 
         variogram, samples_per_bin, bin_width_space, bin_width_time =\
@@ -787,6 +802,10 @@ class Predictor:
         tuple of two 1d numpy arrays
             Mean and standard deviation of the kriging prediction.
         """
+        if self._kriging_function is None:
+            raise ValueError(
+                "No Kriging function defined. Did you fit a variogram model?")
+
         n_targets = len(time)
         if space_dist_max is None:
             space_dist_max = self._variogram_bins_space[-1] / 2

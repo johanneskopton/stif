@@ -2,7 +2,16 @@
 
 "Forecasting and Interpolation in Space and Time"
 
-Package for prediction spatio-temporally distributed variables using space-time regression kriging using numpy and numba.
+Package for predicting spatio-temporally distributed variables via space-time regression Kriging, using numpy and numba.
+
+Using this package, you can do _space-time regression Kriging_. What is this method about? Imagine you have measurements on different days and distributed over a geographical region (basically a table with latitude, longitude, time and the measured variable of interest). And now you want to estimate the value of this variable at locations and dates, at which you didn't measure. This can be the future (forecasting) or just some day in between, where no measurement was taken (interpolation). You may have some other variables (external covariates), that can explain some of the variation of you variable of interest via some form of regression. In this case, it makes sense to do the Kriging only on the residuals of this regression (i.e. *regression Kriging*). All of this, you can do using this package (and hopefully as simple as possible).
+
+## Why this package?
+To my knowledge, there is no other Python package for space-time variogram Kriging on unstructured spatio-temporal data. While the R package [gstat](http://r-spatial.github.io/gstat/) [^1] can do space-time Kriging, there can be problems with large datasets. Furthermore, the R package obviously doesn't play well with the Python ecosystem, e.g. using Keras/tensorflow for the regression part of regression Kriging.
+
+There is the excellent [scikit-gstat](https://github.com/mmaelicke/scikit-gstat) [^2], but as for now it can not create variograms for unstructured spatio-temporal data and I didn't have the time yet to dive into it and add this feature. So perhaps for now, you may find this package useful.
+
+You can also do something like space-time regression Kriging using one of the more mature Gaussian process libraries out there (since Kriging is actually just Gaussian process regression), but they won't provide you with nice variograms and all the other geostats stuff.
 
 ## Installation
 

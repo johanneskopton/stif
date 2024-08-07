@@ -10,8 +10,7 @@ Package for predicting spatio-temporally distributed variables via *space-time r
 
 ## Resources
 
-* [Introduction Notebook](https://github.com/johanneskopton/fist/blob/main/docs/introduction.ipynb) <a target="_blank" href="https://colab.research.google.com/github/johanneskopton/fist/blob/main/docs/introduction.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a>
+* [Introduction Notebook](https://github.com/johanneskopton/fist/blob/main/docs/introduction.ipynb) <a target="_blank" href="https://colab.research.google.com/github/johanneskopton/fist/blob/main/docs/introduction.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 * [Documentation and API reference](https://johannes.kopton.org/fist)
 * [Issue tracker](https://github.com/johanneskopton/fist/issues)
 

@@ -18,8 +18,6 @@ from fist import Data
 from fist.utils import get_variogram
 from fist.utils import calc_distance_matrix_1d
 from fist.utils import calc_distance_matrix_2d
-from fist.utils import calc_distance_matrix_cosine
-from fist.utils import cosine_distance
 from fist.variogram_models import calc_weights
 from fist.variogram_models import get_initial_parameters
 from fist.variogram_models import variogram_model_dict
@@ -81,7 +79,6 @@ class Predictor:
         self._variogram_bins_space = None
         self._variogram_bins_time = None
         self._variogram_model_function = None
-        self._distance = None
         self._kriging_weights_function = None
         self._kriging_function = None
 
@@ -345,7 +342,6 @@ class Predictor:
         n_space_bins=10,
         n_time_bins=10,
         el_max=None,
-        distance="euclidean",
     ):
         """Calculate the empirical space-time variogram for the given samples.
         Computation is done JIT-compiled using numba and without storing the
@@ -376,9 +372,6 @@ class Predictor:
         el_max : int, optional
             Number of sample pairs to consider before termination, by default
             uses all sample pairs
-        distance : str, optional
-            Distance metric to use (can be "euclidean" or "cosine"), by
-            default "euclidean"
 
         References
         ----------
@@ -411,7 +404,6 @@ residuals")
                 n_space_bins,
                 n_time_bins,
                 el_max,
-                distance,
             )
 
         bins_space = np.arange(n_space_bins+1) * bin_width_space
@@ -421,7 +413,6 @@ residuals")
         bins_time = ((bins_time[:-1] + bins_time[1:])/2)
 
         self._variogram = variogram
-        self._distance = distance
         self._variogram_bins_space = bins_space
         self._variogram_bins_time = bins_time
         self._variogram_samples_per_bin = samples_per_bin
@@ -497,7 +488,6 @@ residuals")
             raise ValueError("Create variogram model function first.")
 
         variogram_model_function = self._variogram_model_function
-        distance_metric = self._distance
 
         @nb.njit(fastmath=True)
         def calc_kriging_weights(
@@ -506,12 +496,9 @@ residuals")
             coords_temporal,
         ):
             n = len(kriging_vector)
-            if distance_metric == "euclidean":
-                feature_dist = calc_distance_matrix_2d(coords_spatial)
-            elif distance_metric == "cosine":
-                feature_dist = calc_distance_matrix_cosine(coords_spatial)
+            spatial_dist = calc_distance_matrix_2d(coords_spatial)
             temporal_dist = calc_distance_matrix_1d(coords_temporal)
-            A_var = variogram_model_function(feature_dist, temporal_dist)
+            A_var = variogram_model_function(spatial_dist, temporal_dist)
 
             # for Lagrange multiplier
             A = np.ones((n+1, n+1), dtype=A_var.dtype)
@@ -537,7 +524,6 @@ residuals")
 
         kriging_weights_function = self._kriging_weights_function
         variogram_model_function = self._variogram_model_function
-        distance_metric = self._distance
 
         @nb.njit(fastmath=True, parallel=True)
         def nd_kriging(
@@ -564,20 +550,14 @@ residuals")
                 if len(kriging_idxs_target) < min_kriging_points:
                     kriging_weights[target_i, :] = 0
                     continue
-                if distance_metric == "euclidean":
-                    h = np.sqrt(
-                        np.sum(
-                            np.square(
-                                space_coords[kriging_idxs_target, :] -
-                                space[target_i, :],
-                            ), axis=1,
-                        ),
-                    )
-                elif distance_metric == "cosine":
-                    h = cosine_distance(
-                        space_coords[kriging_idxs_target, :],
-                        space[target_i, :],
-                    )
+                h = np.sqrt(
+                    np.sum(
+                        np.square(
+                            space_coords[kriging_idxs_target, :] -
+                            space[target_i, :],
+                        ), axis=1,
+                    ),
+                )
                 t = np.abs(time_coords[kriging_idxs_target] - time[target_i])
                 kriging_vector = variogram_model_function(h, t)
                 if len(kriging_idxs_target) > max_kriging_points:

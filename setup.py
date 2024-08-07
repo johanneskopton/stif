@@ -20,16 +20,20 @@ setup(
     long_description_content_type="text/markdown",
     classifiers=[
         "Topic :: Scientific/Engineering",
-        "Programming Language :: Python :: 3"
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Framework :: tox",
         "Operating System :: OS Independent",
     ],
+    python_requires=">=3.9",
     install_requires=[
-        "numpy",
+        "numpy>=1.19,<2.0",
         "matplotlib",
         "pandas",
-        "geopandas",
         "scikit-learn",
-        "numba",
+        "numba>=0.54,<=0.60",
         "scipy",
     ],
     extras_require={

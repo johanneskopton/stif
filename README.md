@@ -36,6 +36,11 @@ genbadge coverage -i docs/source/_static/reports/coverage.xml -o docs/source/_st
 genbadge flake8 -i docs/source/_static/reports/flake8stats.txt -o docs/source/_static/flake8-badge.svg
 ```
 
+Check dependencies:
+```sh
+tox
+```
+
 Build sphinx documentation:
 ```sh
 sphinx-build -M html docs/source/ docs/build/

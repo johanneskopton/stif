@@ -169,7 +169,7 @@ class Predictor:
             res = self._cov_model.predict
         return res
 
-    def get_covariate_probability(self, idxs=slice(None)):
+    def get_covariate_prediction(self, idxs=slice(None)):
         """Covariate prediction on the input samples.
         Get the predicted covariate model prediction for the given indices.
 
@@ -185,9 +185,12 @@ class Predictor:
         1d numpy array
             Predicted covariate model predictions.
         """
-        return self._covariate_prediction_function(self._X[idxs]).flatten()
+        if self._cov_model is None:
+            return np.zeros(len(idxs))
+        else:
+            return self._covariate_prediction_function(self._X[idxs]).flatten()
 
-    def predict_covariate_probability(self, df):
+    def calc_covariate_prediction(self, df):
         """Covariate prediction on a pandas DataFrame.
         Get the predicted covariate model prediction for the given DataFrame.
 
@@ -223,7 +226,7 @@ class Predictor:
             Residuals of the covariate model.
         """
         if self._cov_model is not None:
-            return self._y[idxs] - self.get_covariate_probability(idxs)
+            return self._y[idxs] - self.get_covariate_prediction(idxs)
         else:
             return self._y[idxs]
 
@@ -273,7 +276,7 @@ class Predictor:
 
             self.fit_covariate_model(train)
             ground_truth_list.append(self._y[test])
-            prediction = self.get_covariate_probability(test)
+            prediction = self.get_covariate_prediction(test)
             if kriging:
                 if "variogram_params" in geostat_params.keys():
                     variogram_params = geostat_params["variogram_params"]
@@ -849,7 +852,7 @@ residuals")
         return kriging_mean, kriging_std
 
     def predict(self, df, kriging_params=dict()):
-        covariate_prediction = self.predict_covariate_probability(df)
+        covariate_prediction = self.calc_covariate_prediction(df)
         space = df[self._data._space_cols].to_numpy()
         time = df[self._data._time_col].to_numpy()
         kriging_mean, kriging_std = self.get_kriging_prediction(

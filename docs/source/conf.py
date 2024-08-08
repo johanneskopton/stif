@@ -44,3 +44,7 @@ html_static_path = ['_static']
 
 # Ensure that Sphinx can find your code
 sys.path.insert(0, os.path.abspath('../../stif'))
+
+html_context = {
+    "default_mode": "light"
+}

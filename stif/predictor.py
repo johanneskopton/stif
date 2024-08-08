@@ -16,6 +16,7 @@ except ImportError:
 
 from stif import Data
 from stif.utils import get_variogram
+from stif.utils import get_covariogram
 from stif.utils import calc_distance_matrix_1d
 from stif.utils import calc_distance_matrix_2d
 from stif.variogram_models import calc_weights
@@ -416,6 +417,79 @@ residuals")
         self._variogram_bins_space = bins_space
         self._variogram_bins_time = bins_time
         self._variogram_samples_per_bin = samples_per_bin
+
+    def calc_empirical_covariogram(
+        self,
+        idxs=slice(None),
+        space_dist_max=3,
+        time_dist_max=10,
+        n_space_bins=10,
+        n_time_bins=10,
+        el_max=None,
+    ):
+        """Calculate the empirical space-time covariogram.
+        Computation is done JIT-compiled using numba and without storing the
+        entire distance matrix in memory.
+
+        The basic formula for calculation is given by:
+
+        .. math::
+            \\rho(h, u) = \\frac{1}{\\sigma(Z) \\cdot N(h, u)}
+            \\sum_{i=1}^{N(h, u)} \\left[
+            (Z(\\mathbf{s}_i, t_i) - \\mu(Z)) \\cdot (Z(\\mathbf{s}_i + h,
+            t_i + u) - \\mu(Z)) \\right]
+
+        Parameters
+        ----------
+        idxs : 1d numpy index, optional
+            Specify the samples to include, by default all (`slice(None)`)
+        space_dist_max : float, optional
+            Maximum space lag, by default 3
+        time_dist_max : float, optional
+            Maximum time lag, by default 10
+        n_space_bins : int, optional
+            Number of spatial bins, by default 10
+        n_time_bins : int, optional
+            Number of temporal bins, by default 10
+        el_max : int, optional
+            Number of sample pairs to consider before termination, by default
+            uses all sample pairs
+        """
+        space_coords = self._data.space_coords[idxs, :]
+        time_coords = self._data.time_coords[idxs]
+
+        self._prepare_geostatistics()
+
+        if self._residuals is None and self._cov_model is not None:
+            raise ValueError(
+                "Covariate model is set, but was not fitted yet. Please fit \
+the covaraite model first, so the variogram can be calculated on the\
+residuals")
+
+        residuals = self._residuals[idxs]
+
+        covariogram, samples_per_bin, bin_width_space, bin_width_time =\
+            get_covariogram(
+                space_coords,
+                time_coords,
+                residuals,
+                space_dist_max,
+                time_dist_max,
+                n_space_bins,
+                n_time_bins,
+                el_max,
+            )
+
+        bins_space = np.arange(n_space_bins+1) * bin_width_space
+        bins_space = ((bins_space[:-1] + bins_space[1:])/2)
+
+        bins_time = np.arange(n_time_bins+1) * bin_width_time
+        bins_time = ((bins_time[:-1] + bins_time[1:])/2)
+
+        self._covariogram = covariogram
+        self._covariogram_bins_space = bins_space
+        self._covariogram_bins_time = bins_time
+        self._covariogram_samples_per_bin = samples_per_bin
 
     def save_empirical_variogram(self, filename):
         """Save empirical variogram to file.
@@ -985,6 +1059,7 @@ residuals")
         ax=None,
         vrange=(None, None),
         title="",
+        target="screen",
     ):
         """Plot the empirical variogram in a surface plot.
         Semivariance over space and time lags.
@@ -1000,6 +1075,8 @@ residuals")
             Value range minimum and maximum, by default (None, None)
         title : str, optional
             Axis title, by default ""
+        target : str, optional
+            If not "screen", path to write the figure to, by default "screen"
 
         Raises
         ------
@@ -1015,6 +1092,49 @@ residuals")
             ax=ax,
             vrange=vrange,
             title=title,
+            target=target,
+        )
+
+    def plot_empirical_covariogram(
+        self,
+        fig=None,
+        ax=None,
+        vrange=(None, None),
+        title="",
+        target="screen",
+    ):
+        """Plot the empirical covariogram in a surface plot.
+        Autocorrelation over space and time lags.
+
+        Parameters
+        ----------
+        fig : matplotlib figure, optional
+            Existing figure to plot the covariogram to (needs also `ax` to be
+            set), by default None
+        ax : matplotlib axis, optional
+            Existing axis to plot the covariogram to, by default None
+        vrange : tuple(float), optional
+            Value range minimum and maximum, by default (None, None)
+        title : str, optional
+            Axis title, by default ""
+        target : str, optional
+            If not "screen", path to write the figure to, by default "screen"
+
+        Raises
+        ------
+        ValueError
+            _description_
+        """
+        if self._covariogram is None:
+            raise ValueError("Calc variogram first.")
+
+        self._plot_covariogram(
+            self._covariogram,
+            fig=fig,
+            ax=ax,
+            vrange=vrange,
+            title=title,
+            target=target,
         )
 
     def _plot_variogram(
@@ -1024,6 +1144,7 @@ residuals")
         ax=None,
         vrange=(None, None),
         title="",
+        target="screen",
     ):
         if self._variogram_bins_space is None:
             raise ValueError("Calc variogram first or set bins manually.")
@@ -1033,11 +1154,8 @@ residuals")
             self._variogram_bins_time,
         )
         if ax is None:
-            standalone = True
             fig = plt.figure(figsize=(5, 5))
             ax = plt.axes(projection='3d')
-        else:
-            standalone = False
         vmin, vmax = vrange
         plot = ax.plot_surface(
             X, Y, variogram.T, vmin=vmin, vmax=vmax,
@@ -1050,8 +1168,51 @@ residuals")
         ax.set_ylabel("time lag")
         fig.colorbar(plot, fraction=0.044, pad=0.04)
 
-        if standalone:
-            plt.show()
+        if ax is None:
+            if target == "screen":
+                plt.show()
+            else:
+                fig.savefig(target)
+
+    def _plot_covariogram(
+        self,
+        covariogram,
+        fig=None,
+        ax=None,
+        vrange=(None, None),
+        title="",
+        target="screen",
+    ):
+        if self._covariogram_bins_space is None:
+            raise ValueError("Calc variogram first or set bins manually.")
+
+        X, Y = np.meshgrid(
+            self._covariogram_bins_space,
+            self._covariogram_bins_time,
+        )
+        if ax is None:
+            fig = plt.figure(figsize=(5, 5))
+            ax = plt.axes(projection='3d')
+        vmin, vmax = vrange
+        plot = ax.plot_surface(
+            X, Y, covariogram.T, vmin=vmin, vmax=vmax,
+            cmap="plasma", edgecolor="black", linewidth=0.5,
+        )
+        ax.view_init(elev=35., azim=225)
+        ax.set_xlim(ax.get_xlim()[::-1])
+        ax.set_ylim(ax.get_ylim()[::-1])
+        ax.grid(False)
+        ax.set_title(title)
+        ax.set_xlabel("space lag")
+        ax.set_ylabel("time lag")
+        ax.set_zlabel('covariance')
+        fig.colorbar(plot, fraction=0.044, pad=0.04)
+
+        if ax is None:
+            if target == "screen":
+                plt.show()
+            else:
+                fig.savefig(target)
 
     def plot_variogram_model_comparison(
         self,

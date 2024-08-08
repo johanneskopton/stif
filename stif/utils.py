@@ -188,3 +188,92 @@ def get_variogram(
                 variogram[i, j] = np.nan
 
     return variogram, norm, space_bin_width, time_bin_width
+
+
+@nb.njit(fastmath=True)
+def get_covariogram(
+    features,
+    time,
+    val,
+    space_dist_max,
+    time_dist_max,
+    n_space_bins,
+    n_time_bins,
+    n_samples,
+):
+    """Calculate empirical covariogram.
+
+    Parameters
+    ----------
+    space : Numpy array of shape (n, 2)
+        Spatial coordinates
+    time : Numpy array of shape (n,)
+        Temporal coordinates
+    val : Numpy array of shape (n,)
+        Values
+    space_dist_max : float
+        Maximum spatial distance
+    time_dist_max : float
+        Maximum temporal distance
+    n_space_bins : int
+        Number of spatial bins
+    n_time_bins : int
+        Number of temporal bins
+    n_samples : int
+        Maximum number of samples
+
+    Returns
+    -------
+    tuple
+        Covariogram (numpy array of shape (n_space_bins, n_time_bins)),
+        norm (numpy array of shape (n_space_bins, n_time_bins)),
+        space_bin_width (float), time_bin_width (float)
+    """
+    n = len(val)
+
+    mean = np.mean(val)
+    var = np.var(val)
+
+    # prepare histogram
+    space_bin_width = space_dist_max / n_space_bins
+    time_bin_width = time_dist_max / n_time_bins
+    hist = np.zeros((n_space_bins, n_time_bins), dtype=np.float64)
+    norm = np.zeros((n_space_bins, n_time_bins), dtype=np.float64)
+
+    for i, j in _pair_index_generator(n, n_samples):
+        features_lag = np.sqrt(
+            np.square(features[i, 0]-features[j, 0]) +
+            np.square(features[i, 1]-features[j, 1]),
+        )
+
+        if features_lag > space_dist_max:
+            continue
+        time_lag = np.abs(time[i]-time[j])
+        if time_lag > time_dist_max:
+            continue
+        sq_val_delta = (val[i]-mean)*(val[j]-mean)
+
+        # space_lag, time_lag, sq_val_delta
+        space_bin = int(features_lag / space_bin_width)
+        time_bin = int(time_lag / time_bin_width)
+
+        if 0 <= space_bin < n_space_bins and\
+                0 <= time_bin < n_time_bins:
+            hist[space_bin, time_bin] += sq_val_delta
+            norm[space_bin, time_bin] += 1
+
+    # I think this "/2" is necessary, because in samples_per_bin are only
+    # n^2/2 samples in total
+    covariogram = np.divide(
+        hist,
+        norm,
+        # out=np.ones_like(hist) * np.nan,
+        # where=norm != 0,
+    ) / var
+
+    for i in range(n_space_bins):
+        for j in range(n_time_bins):
+            if norm[i, j] == 0:
+                covariogram[i, j] = np.nan
+
+    return covariogram, norm, space_bin_width, time_bin_width

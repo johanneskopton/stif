@@ -204,6 +204,30 @@ def test_empirical_variogram_samples():
     assert np.isclose(predictor._variogram.max(), 136.0, rtol=0.5)
 
 
+def test_empirical_covariogram_samples():
+    data = Data(
+        df,
+        space_cols=["x", "y"],
+        time_col="time",
+        predictand_col="PM10",
+        covariate_cols=["x", "y", "time"],
+    )
+
+    covariate_model = LinearRegression()
+    predictor = Predictor(data, covariate_model)
+    predictor.fit_covariate_model()
+
+    predictor.calc_empirical_covariogram(
+        space_dist_max=6e5,
+        time_dist_max=10,
+        el_max=1e7,
+    )
+
+    predictor.plot_empirical_covariogram(
+        target=tempfile.NamedTemporaryFile(delete=True),
+    )
+
+
 def test_save_empirical_variogram():
     data = Data(
         df,

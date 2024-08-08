@@ -9,7 +9,7 @@ def read(fname):
 
 setup(
     name="stif",
-    version="0.0.1",
+    version="1.0.0",
     author="Johannes Kopton",
     author_email="johannes@kopton.org",
     description=("Forecasting and Interpolation in Space and Time"),

@@ -18,6 +18,8 @@ setup(
     packages=["stif"],
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
+    license='MIT',
+    license_files=('LICENSE',),
     classifiers=[
         "Topic :: Scientific/Engineering",
         "Programming Language :: Python :: 3",
@@ -26,6 +28,7 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Framework :: tox",
         "Operating System :: OS Independent",
+        "License :: OSI Approved :: MIT License",
     ],
     python_requires=">=3.9",
     install_requires=[

@@ -4,6 +4,8 @@
 [![Test](https://johannes.kopton.org/stif/_static/tests-badge.svg)](https://johannes.kopton.org/stif/_static/reports/junit/report.html)
 [![Test coverage](https://johannes.kopton.org/stif/_static/coverage-badge.svg)](https://johannes.kopton.org/stif/_static/reports/htmlcov/index.html)
 [![Flake8](https://johannes.kopton.org/stif/_static/flake8-badge.svg)](https://johannes.kopton.org/stif/_static/reports/flake8)
+[![PyPI - License](https://img.shields.io/pypi/l/stif)](https://github.com/johanneskopton/stif/blob/main/LICENSE)
+
 
 "Space-time interpolation and forecasting"
 

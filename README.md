@@ -1,14 +1,11 @@
-# STIF
+# STIF: Space-Time Interpolation and Forecasting"
 
 [![PyPI - Version](https://img.shields.io/pypi/v/stif)](https://pypi.org/project/stif/)
 [![Test](https://johannes.kopton.org/stif/_static/tests-badge.svg)](https://johannes.kopton.org/stif/_static/reports/junit/report.html)
 [![Test coverage](https://johannes.kopton.org/stif/_static/coverage-badge.svg)](https://johannes.kopton.org/stif/_static/reports/htmlcov/index.html)
 [![Flake8](https://johannes.kopton.org/stif/_static/flake8-badge.svg)](https://johannes.kopton.org/stif/_static/reports/flake8)
 [![PyPI - License](https://img.shields.io/pypi/l/stif)](https://github.com/johanneskopton/stif/blob/main/LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13271981.svg)](https://doi.org/10.5281/zenodo.13271981)
-
-
-"Space-time interpolation and forecasting"
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13271982.svg)](https://doi.org/10.5281/zenodo.13271982)
 
 Package for predicting spatio-temporally distributed variables via *space-time regression Kriging*, using numpy and numba.
 
@@ -102,6 +99,9 @@ Publish package on PyPI:
 ```sh
 twine upload dist/*
 ```
+
+## How to cite
+> Kopton, J. (2024). STIF: Space-Time Interpolation and Forecasting (1.0.1). Zenodo. https://doi.org/10.5281/zenodo.13271982
 
 ## Acknowledgements
 Heavily inspired by [^3] and the space-time variogram implementation in the R package [gstat](http://r-spatial.github.io/gstat/). Thanks a lot to Sytze de Bruin from Wageningen University for a lot of help with the geostatistics.

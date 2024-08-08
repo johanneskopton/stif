@@ -12,7 +12,7 @@ setup(
     version="1.0.1",
     author="Johannes Kopton",
     author_email="johannes@kopton.org",
-    description=("Space-time interpolation and forecasting"),
+    description=("Space-Time Interpolation and Forecasting"),
     keywords="geostatistics kriging variogram spatio-temporal",
     url="https://github.com/johanneskopton/stif",
     packages=["stif"],

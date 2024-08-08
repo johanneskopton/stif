@@ -1,4 +1,4 @@
-# STIF: Space-Time Interpolation and Forecasting"
+# STIF: Space-Time Interpolation and Forecasting
 
 [![PyPI - Version](https://img.shields.io/pypi/v/stif)](https://pypi.org/project/stif/)
 [![Test](https://johannes.kopton.org/stif/_static/tests-badge.svg)](https://johannes.kopton.org/stif/_static/reports/junit/report.html)

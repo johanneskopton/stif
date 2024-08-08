@@ -1,5 +1,6 @@
 # STIF
 
+[![PyPI - Version](https://img.shields.io/pypi/v/stif)](https://pypi.org/project/stif/)
 [![Test](https://johannes.kopton.org/stif/_static/tests-badge.svg)](https://johannes.kopton.org/stif/_static/reports/junit/report.html)
 [![Test coverage](https://johannes.kopton.org/stif/_static/coverage-badge.svg)](https://johannes.kopton.org/stif/_static/reports/htmlcov/index.html)
 [![Flake8](https://johannes.kopton.org/stif/_static/flake8-badge.svg)](https://johannes.kopton.org/stif/_static/reports/flake8)

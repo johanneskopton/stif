@@ -50,6 +50,7 @@ setup(
             "ipykernel",
         ],
         "dev": [
+            "build",
             "pytest",
             "pytest-cov",
             "pytest-html",
@@ -62,6 +63,7 @@ setup(
             "myst-parser",
             "pydata-sphinx-theme",
             "tox",
+            "twine",
         ],
     },
 )

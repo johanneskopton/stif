@@ -89,6 +89,11 @@ Build sphinx documentation:
 sphinx-build -M html docs/source/ docs/build/
 ```
 
+Build package:
+```sh
+python -m build
+```
+
 ## Acknowledgements
 Heavily inspired by [^3] and the space-time variogram implementation in the R package [gstat](http://r-spatial.github.io/gstat/). Thanks a lot to Sytze de Bruin from Wageningen University for a lot of help with the geostatistics.
 
